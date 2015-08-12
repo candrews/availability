@@ -2,9 +2,12 @@ package com.integralblue.availability.service.impl;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +16,8 @@ import org.springframework.util.Assert;
 
 import com.integralblue.availability.model.FreeBusyResponse;
 import com.integralblue.availability.model.FreeBusyStatus;
+import com.integralblue.availability.model.Room;
+import com.integralblue.availability.model.RoomList;
 import com.integralblue.availability.properties.ExchangeConnectionProperties;
 import com.integralblue.availability.service.AvailabilityService;
 
@@ -28,6 +33,7 @@ import microsoft.exchange.webservices.data.misc.availability.AttendeeInfo;
 import microsoft.exchange.webservices.data.misc.availability.AvailabilityOptions;
 import microsoft.exchange.webservices.data.misc.availability.GetUserAvailabilityResults;
 import microsoft.exchange.webservices.data.misc.availability.TimeWindow;
+import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.availability.Suggestion;
 import microsoft.exchange.webservices.data.property.complex.availability.TimeSuggestion;
 
@@ -109,5 +115,27 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		exchangeService.setCredentials(new WebCredentials(exchangeConnectionProperties.getCredentials().getUsername(), exchangeConnectionProperties.getCredentials().getPassword(),exchangeConnectionProperties.getCredentials().getDomain()));
 		exchangeService.setUrl(exchangeConnectionProperties.getUri());
 		return exchangeService;
+	}
+
+	@SneakyThrows
+	@Override
+	public Set<RoomList> getRoomLists() {
+		final Set<RoomList> roomLists = new HashSet<>();
+		final ExchangeService exchangeService = getExchangeService();
+		for(EmailAddress emailAddress : exchangeService.getRoomLists()){
+			roomLists.add(RoomList.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
+		}
+		return Collections.unmodifiableSet(roomLists);
+	}
+
+	@SneakyThrows
+	@Override
+	public Set<Room> getRooms(String roomListEmailAddress) {
+		final Set<Room> roomLists = new HashSet<>();
+		final ExchangeService exchangeService = getExchangeService();
+		for(EmailAddress emailAddress : exchangeService.getRooms(new EmailAddress(roomListEmailAddress))){
+			roomLists.add(Room.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
+		}
+		return Collections.unmodifiableSet(roomLists);
 	}
 }

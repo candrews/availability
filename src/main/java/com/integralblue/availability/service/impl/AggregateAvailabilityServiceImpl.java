@@ -1,12 +1,16 @@
 package com.integralblue.availability.service.impl;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.integralblue.availability.model.FreeBusyResponse;
+import com.integralblue.availability.model.RoomList;
 import com.integralblue.availability.service.AggregateAvailabilityService;
 import com.integralblue.availability.service.AvailabilityService;
 
@@ -26,6 +30,15 @@ public class AggregateAvailabilityServiceImpl implements AggregateAvailabilitySe
 			}
 		}
 		return Optional.empty();
+	}
+
+	@Override
+	public Set<RoomList> getRoomLists() {
+		final Set<RoomList> roomLists = new HashSet<>();
+		for(final AvailabilityService availabilityService : availabilityServices){
+			roomLists.addAll(availabilityService.getRoomLists());
+		}
+		return Collections.unmodifiableSet(roomLists);
 	}
 	
 	

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.integralblue.availability.model.FreeBusyResponse;
@@ -29,7 +30,7 @@ public class AvailabilityController {
 	@Autowired
 	private AggregateAvailabilityService aggregateAvailabilityService;
 	
-	@RequestMapping(value="/user/{username}/availability", produces=MediaType.APPLICATION_JSON_VALUE)
+	@RequestMapping(value="/user/{username}/availability", produces=MediaType.APPLICATION_JSON_VALUE,method=RequestMethod.GET)
 	public ResponseEntity<FreeBusyResponse> getAvailability(@PathVariable String username){
 		final Optional<FreeBusyResponse> optionalAvailability = aggregateAvailabilityService.getAvailability(username);
 		if(optionalAvailability.isPresent()){
@@ -39,7 +40,7 @@ public class AvailabilityController {
 		}
 	}
 	
-	@RequestMapping(value="/user/{username}/availability")
+	@RequestMapping(value="/user/{username}/availability",method=RequestMethod.GET)
 	public ResponseEntity<Void> getAvailability(@NonNull HttpServletResponse response, @PathVariable String username, @RequestParam(required=false,value="free") String freeUrl, @RequestParam(required=false,value="busy") String busyUrl, @RequestParam(required=false,value="tentative") String tentativeUrl ){
 		final Optional<FreeBusyResponse> optionalAvailability = aggregateAvailabilityService.getAvailability(username);
 		if(optionalAvailability.isPresent()){

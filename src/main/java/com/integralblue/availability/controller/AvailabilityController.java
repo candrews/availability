@@ -1,22 +1,28 @@
 package com.integralblue.availability.controller;
 
 import java.net.URI;
+import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.util.StringUtils;
+import org.springframework.ui.Model;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.integralblue.availability.model.FreeBusyResponse;
+import com.integralblue.availability.NotFoundException;
+import com.integralblue.availability.model.Availability;
 import com.integralblue.availability.service.AggregateAvailabilityService;
 
 import lombok.NonNull;
@@ -30,37 +36,40 @@ public class AvailabilityController {
 	@Autowired
 	private AggregateAvailabilityService aggregateAvailabilityService;
 	
-	@RequestMapping(value="/user/{username}/availability", produces=MediaType.APPLICATION_JSON_VALUE,method=RequestMethod.GET)
-	public ResponseEntity<FreeBusyResponse> getAvailability(@PathVariable String username){
-		final Optional<FreeBusyResponse> optionalAvailability = aggregateAvailabilityService.getAvailability(username);
-		if(optionalAvailability.isPresent()){
-			return new ResponseEntity<FreeBusyResponse>(optionalAvailability.get(), HttpStatus.OK);
-		}else{
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
+	@RequestMapping(value="/user/{emailAddress}/availability",method=RequestMethod.GET,produces=MediaType.TEXT_HTML_VALUE)
+	public String getAvailabilityView(Model model, @PathVariable String emailAddress){
+		model.addAttribute("emailAddress", emailAddress);
+		return "availability";
 	}
 	
-	@RequestMapping(value="/user/{username}/availability",method=RequestMethod.GET)
-	public ResponseEntity<Void> getAvailability(@NonNull HttpServletResponse response, @PathVariable String username, @RequestParam(required=false,value="free") String freeUrl, @RequestParam(required=false,value="busy") String busyUrl, @RequestParam(required=false,value="tentative") String tentativeUrl ){
-		final Optional<FreeBusyResponse> optionalAvailability = aggregateAvailabilityService.getAvailability(username);
+	@ResponseBody
+	@RequestMapping(value="/user/{emailAddress}/availability",method=RequestMethod.GET,produces=MediaType.APPLICATION_JSON_VALUE)
+	public Availability getAvailability(Model model, @PathVariable String emailAddress, @RequestParam(value="start") @DateTimeFormat(iso=ISO.DATE_TIME) Date start, @RequestParam(value="end") @DateTimeFormat(iso=ISO.DATE_TIME) Date end){
+		Assert.isTrue(!start.after(end), "start cannot be after end");
+		return aggregateAvailabilityService.getAvailability(emailAddress, start, end).orElseThrow(NotFoundException::new);
+	}
+	
+	@RequestMapping(value="/user/{emailAddress}/availability/redirect",method=RequestMethod.GET)
+	public ResponseEntity<Void> getAvailability(@NonNull HttpServletResponse response, @PathVariable String emailAddress, @RequestParam(required=false,value="free",defaultValue=DEFAULT_FREE_URL) String freeUrl, @RequestParam(value="busy",defaultValue=DEFAULT_BUSY_URL) String busyUrl, @RequestParam(value="tentative",defaultValue=DEFAULT_TENTATIVE_URL) String tentativeUrl, @RequestParam(value="date",required=false) Optional<Date> date){
+		final Optional<Availability> optionalAvailability = aggregateAvailabilityService.getAvailability(emailAddress, date.orElse(new Date()), date.orElse(new Date()));
 		if(optionalAvailability.isPresent()){
 			String url;
-			switch(optionalAvailability.get().getFreeBusyStatus()){
+			switch(optionalAvailability.get().getStatusAtStart()){
 			case FREE:
-				url=response.encodeURL(StringUtils.isEmpty(freeUrl)?DEFAULT_FREE_URL:freeUrl);
+				url=freeUrl;
 				break;
 			case BUSY:
-				url=response.encodeURL(StringUtils.isEmpty(busyUrl)?DEFAULT_BUSY_URL:busyUrl);
+				url=busyUrl;
 				break;
 			case TENTATIVE:
-				url=response.encodeURL(StringUtils.isEmpty(tentativeUrl)?DEFAULT_TENTATIVE_URL:tentativeUrl);
+				url=tentativeUrl;
 				break;
 			default:
 				throw new IllegalStateException();
 			}
 			return ResponseEntity.status(HttpStatus.TEMPORARY_REDIRECT).location(URI.create(url)).build();
 		}else{
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			throw new NotFoundException();
 		}
 	}
 }

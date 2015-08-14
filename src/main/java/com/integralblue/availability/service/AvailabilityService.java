@@ -1,18 +1,21 @@
 package com.integralblue.availability.service;
 
+import java.util.Date;
 import java.util.Optional;
 import java.util.Set;
 
-import com.integralblue.availability.model.FreeBusyResponse;
+import com.integralblue.availability.model.Availability;
 import com.integralblue.availability.model.Room;
 import com.integralblue.availability.model.RoomList;
 
 public interface AvailabilityService {
 	/**
-	 * @param username
-	 * @return empty optional if the given username was not found
+	 * @param emailAddress
+	 * @param startDate
+	 * @param endDate
+	 * @return empty optional if the given emailAddress was not found
 	 */
-	Optional<FreeBusyResponse> getAvailability(String username);
+	Optional<Availability> getAvailability(String emailAddress, Date startDate, Date endDate);
 	
 	/** Get the room lists
 	 * @return
@@ -23,5 +26,5 @@ public interface AvailabilityService {
 	 * @param roomListEmailAddress
 	 * @return
 	 */
-	Set<Room> getRooms(String roomListEmailAddress);
+	Optional<Set<Room>> getRooms(String roomListEmailAddress);
 }

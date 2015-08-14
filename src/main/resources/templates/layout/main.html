@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:th="http://www.thymeleaf.org"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+  <head>
+    <title layout:title-pattern="$DECORATOR_TITLE - $CONTENT_TITLE">Availability</title>
+    <link rel='stylesheet' th:href='@{/css/main.css}' type="text/css" />
+    <script th:src="@{/webjars.js}" type="application/javascript"></script>
+	<script th:attr="data-main=@{/js/app.js}" th:src="@{/webjarslocator/requirejs/require.min.js}"></script>
+  </head>
+  <body>
+    <header layout:fragment="header">
+      <h1>Header</h1>
+    </header>
+    <section layout:fragment="content">
+      <p>Content</p>
+    </section>
+    <footer layout:fragment="footer">
+      <p>Footer</p>
+    </footer>  
+  </body>
+</html>

@@ -1,7 +1,7 @@
 package com.integralblue.availability.service.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -14,7 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import com.integralblue.availability.model.FreeBusyResponse;
+import com.integralblue.availability.model.CalendarEvent;
+import com.integralblue.availability.model.Availability;
 import com.integralblue.availability.model.FreeBusyStatus;
 import com.integralblue.availability.model.Room;
 import com.integralblue.availability.model.RoomList;
@@ -26,6 +27,7 @@ import lombok.SneakyThrows;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
 import microsoft.exchange.webservices.data.core.enumeration.misc.error.ServiceError;
+import microsoft.exchange.webservices.data.core.enumeration.property.LegacyFreeBusyStatus;
 import microsoft.exchange.webservices.data.core.exception.service.remote.ServiceResponseException;
 import microsoft.exchange.webservices.data.core.response.AttendeeAvailability;
 import microsoft.exchange.webservices.data.credential.WebCredentials;
@@ -44,19 +46,17 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@Override
 	@SneakyThrows
-	public Optional<FreeBusyResponse> getAvailability(@NonNull String username) {
+	public Optional<Availability> getAvailability(@NonNull String emailAddress, @NonNull Date start, @NonNull Date end) {
+		Assert.isTrue(! start.after(end), "start must not be after end");
 		final ExchangeService exchangeService = getExchangeService();
-		final List<AttendeeInfo> attendees = Arrays.asList(new AttendeeInfo[] { new AttendeeInfo(username) });
-
-		// minimum time frame allowed by API is 24 hours
-		final Date start = new Date();
-		final Date end = DateUtils.addDays(new Date(), 1);
+		final List<AttendeeInfo> attendees = Arrays.asList(new AttendeeInfo[] { new AttendeeInfo(emailAddress) });
 
 		final AvailabilityOptions availabilityOptions = new AvailabilityOptions();
 		availabilityOptions.setMeetingDuration(30);
-		
+
+		// minimum time frame allowed by API is 24 hours
 		final GetUserAvailabilityResults results = exchangeService.getUserAvailability(attendees,
-				new TimeWindow(start, end), AvailabilityData.FreeBusyAndSuggestions,availabilityOptions);
+				new TimeWindow(start, end.before(DateUtils.addDays(start, 1))?DateUtils.addDays(start, 1):end), AvailabilityData.FreeBusyAndSuggestions,availabilityOptions);
 
 		Assert.isTrue(results.getAttendeesAvailability().getCount() == 1);
 		AttendeeAvailability attendeeAvailability;
@@ -70,28 +70,14 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 				throw e;
 			}
 		}
-		final FreeBusyStatus status = aggregateStatus(attendeeAvailability.getCalendarEvents());
-		
-		Date nextFree = null;
-		for(final Suggestion suggestion : results.getSuggestions()){
-			for(final TimeSuggestion timeSuggestion : suggestion.getTimeSuggestions()){
-				if(nextFree==null || nextFree.after(timeSuggestion.getMeetingTime())){
-					nextFree = timeSuggestion.getMeetingTime();
-				}
-			}
-		}
-
-		return Optional.of(FreeBusyResponse.builder().freeBusyStatus(status).nextFree(nextFree).build());
-	}
-
-	private FreeBusyStatus aggregateStatus(Collection<microsoft.exchange.webservices.data.property.complex.availability.CalendarEvent> calendarEvents) {
-		final Date now = new Date();
-		FreeBusyStatus aggregateStatus = FreeBusyStatus.FREE;
-		for (final microsoft.exchange.webservices.data.property.complex.availability.CalendarEvent calendarEvent : calendarEvents) {
-			if(now.after(calendarEvent.getStartTime()) && now.before(calendarEvent.getEndTime())){
+		FreeBusyStatus statusAtStart = FreeBusyStatus.FREE;
+		final List<CalendarEvent> calendarEvents = new ArrayList<>();
+		for (final microsoft.exchange.webservices.data.property.complex.availability.CalendarEvent calendarEvent : attendeeAvailability.getCalendarEvents()) {
+			if(start.compareTo(calendarEvent.getEndTime()) < 0 && calendarEvent.getStartTime().compareTo(start) <= 0){
 				switch (calendarEvent.getFreeBusyStatus()) {
 				case Busy:
-					return FreeBusyStatus.BUSY;
+					statusAtStart = FreeBusyStatus.BUSY;
+					break;
 				case Free:
 					// do nothing
 					break;
@@ -102,11 +88,35 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 					// do nothing
 					break;
 				case Tentative:
-					aggregateStatus = FreeBusyStatus.TENTATIVE;
+					if(statusAtStart == FreeBusyStatus.FREE){
+						statusAtStart = FreeBusyStatus.TENTATIVE;
+					}
+					break;
+				}
+			}
+			
+			if(start.compareTo(calendarEvent.getEndTime()) < 0 && calendarEvent.getStartTime().compareTo(end) < 0){
+				calendarEvents.add(
+						CalendarEvent.builder()
+						.start(calendarEvent.getStartTime())
+						.end(calendarEvent.getEndTime())
+						.status(legacyFreeBusyStatusToFreeBusyStatus(calendarEvent.getFreeBusyStatus()))
+						.location(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getLocation())
+						.subject(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getSubject())
+					.build());
+			}
+		}
+		
+		Date nextFree = null;
+		for(final Suggestion suggestion : results.getSuggestions()){
+			for(final TimeSuggestion timeSuggestion : suggestion.getTimeSuggestions()){
+				if(nextFree==null || nextFree.after(timeSuggestion.getMeetingTime())){
+					nextFree = timeSuggestion.getMeetingTime();
 				}
 			}
 		}
-		return aggregateStatus;
+
+		return Optional.of(Availability.builder().statusAtStart(statusAtStart).nextFree(nextFree).calendarEvents(Collections.unmodifiableList(calendarEvents)).build());
 	}
 
 	@SneakyThrows
@@ -130,12 +140,25 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
-	public Set<Room> getRooms(String roomListEmailAddress) {
+	public Optional<Set<Room>> getRooms(@NonNull String roomListEmailAddress) {
 		final Set<Room> roomLists = new HashSet<>();
 		final ExchangeService exchangeService = getExchangeService();
 		for(EmailAddress emailAddress : exchangeService.getRooms(new EmailAddress(roomListEmailAddress))){
 			roomLists.add(Room.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
 		}
-		return Collections.unmodifiableSet(roomLists);
+		return Optional.of(Collections.unmodifiableSet(roomLists));
+	}
+	
+	private static FreeBusyStatus legacyFreeBusyStatusToFreeBusyStatus(@NonNull LegacyFreeBusyStatus legacyFreeBusyStatus){
+		switch(legacyFreeBusyStatus){
+		case Busy:
+			return FreeBusyStatus.BUSY;
+		case Free:
+			return FreeBusyStatus.FREE;
+		case Tentative:
+			return FreeBusyStatus.TENTATIVE;
+		default:
+			return FreeBusyStatus.FREE;
+		}
 	}
 }

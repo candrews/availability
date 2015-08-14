@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+  xmlns:th="http://www.thymeleaf.org"
+  layout:decorator="layout/main">
+  <head>
+    <title th:text="${emailAddress}"></title>
+    <link rel='stylesheet' th:href='@{/webjarslocator/fullcalendar/dist/fullcalendar.css}' type="text/css" />
+    <link rel='stylesheet' th:href='@{/css/calendar.css}' type="text/css" />
+  </head>
+  <body>
+    <header layout:fragment="header">
+      <h1 th:text="${emailAddress}"></h1>
+    </header>
+    <section layout:fragment="content">
+      <p>This is a paragraph from content page 1</p>
+      <div id='calendar'></div>
+    </section>
+    <footer>
+      <p layout:fragment="footer">This is some footer content from content page 1</p>
+    </footer>
+  </body>
+</html>

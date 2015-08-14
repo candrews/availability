@@ -15,4 +15,4 @@ deploy:
   zip_file: target/availability-0.0.1-SNAPSHOT.war
   on:
     repo: candrews/availability
-    branch: dev
+    branch: master

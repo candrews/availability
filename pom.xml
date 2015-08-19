@@ -17,7 +17,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.3.0.M3</version>
+		<version>1.3.0.M4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
@@ -39,6 +39,11 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-thymeleaf</artifactId>
+		</dependency>
+		<!-- thymeleaf needs nekohtml to parse "legacy html5" (html is not well formed xml) -->
+		<dependency>
+			<groupId>net.sourceforge.nekohtml</groupId>
+			<artifactId>nekohtml</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -95,21 +100,6 @@
           <artifactId>jasypt-spring-boot-starter</artifactId>
           <version>1.2</version>
 		</dependency>
-		<dependency>
-			<groupId>org.webjars</groupId>
-			<artifactId>webjars-locator</artifactId>
-			<version>0.27</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.webjars</groupId>
-		    <artifactId>requirejs</artifactId>
-		    <version>2.1.20</version>
-		</dependency>
-		<dependency>
-          <groupId>org.webjars.bower</groupId>
-          <artifactId>fullcalendar</artifactId>
-          <version>2.3.1</version>
-		</dependency>
         <dependency>
           <groupId>nz.net.ultraq.thymeleaf</groupId>
           <artifactId>thymeleaf-layout-dialect</artifactId>
@@ -121,35 +111,93 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- Don't add resources - webpack copies the files to target, and if this option is on, this plugin will delete those files -->
+<!-- 					<addResources>false</addResources> -->
+				</configuration>
 			</plugin>
 	        <plugin>
 	            <groupId>pl.project13.maven</groupId>
 	            <artifactId>git-commit-id-plugin</artifactId>
         	</plugin>
-<!--        	    <plugin> -->
-<!-- 		        <groupId>com.github.eirslett</groupId> -->
-<!-- 		        <artifactId>frontend-maven-plugin</artifactId> -->
-<!-- 		        <version>0.0.23</version> -->
-<!-- 		        <executions> -->
-<!-- 		        	<execution> -->
-<!-- 					    <id>install node and npm</id> -->
-<!-- 					    <goals> -->
-<!-- 					        <goal>install-node-and-npm</goal> -->
-<!-- 					    </goals> -->
-<!-- 					    <configuration> -->
-<!-- 					        <nodeVersion>v0.12.7</nodeVersion> -->
-<!-- 					        <npmVersion>3.2.2</npmVersion> -->
-<!-- 					    </configuration> -->
-<!-- 					</execution> -->
-<!-- 					<execution> -->
-<!-- 					    <id>bower install</id> -->
-<!-- 					    <goals> -->
-<!-- 					        <goal>bower</goal> -->
-<!-- 					    </goals> -->
-<!-- 				    </execution> -->
-<!-- 				</executions> -->
-<!-- 	    	</plugin> -->
+       	    <plugin>
+		        <groupId>com.github.eirslett</groupId>
+		        <artifactId>frontend-maven-plugin</artifactId>
+		        <version>0.0.24</version>
+		        <executions>
+		        	<execution>
+					    <id>install node and npm</id>
+					    <goals>
+					        <goal>install-node-and-npm</goal>
+					    </goals>
+					    <configuration>
+					        <nodeVersion>v0.12.7</nodeVersion>
+					        <npmVersion>3.3.0</npmVersion>
+					    </configuration>
+					</execution>
+				    <execution>
+					    <id>npm install</id>
+					    <goals>
+					        <goal>npm</goal>
+					    </goals>
+					    <configuration>
+					    	<arguments>install</arguments>
+					    </configuration>
+					</execution>
+					<execution>
+					    <id>webpack build</id>
+					    <goals>
+					        <goal>webpack</goal>
+					    </goals>
+		                <configuration>
+		                    <srcdir>${basedir}/src/main/resources/static</srcdir> <!-- srcdir (optional, for M2Eclipse integration) - a directory to check for changed files before executing in an incremental build  -->
+		                    <triggerfiles> <!-- (optional, for M2Eclipse integration) - a list of files to check for changes before executing in an incremental build  -->
+		                           	<triggerfile>webpack.config.json</triggerfile>
+		                    </triggerfiles>
+		                    <outputdir>${project.build.directory}/target/classes/static</outputdir>
+		                </configuration>
+					</execution>
+				</executions>
+	    	</plugin>
 		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!-- Remove this when using >= 0.0.25 of frontend-maven-plugin -->
+				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											com.github.eirslett
+										</groupId>
+										<artifactId>
+											frontend-maven-plugin
+										</artifactId>
+										<versionRange>
+											[0.0.24,)
+										</versionRange>
+										<goals>
+											<goal>webpack</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<execute>
+											<runOnIncremental>true</runOnIncremental>
+										</execute>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 	</build>
 	
 	<repositories>

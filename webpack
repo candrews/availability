@@ -1,0 +1,2 @@
+#!/bin/sh
+"node/node" "node_modules/webpack/bin/webpack.js" "$@"

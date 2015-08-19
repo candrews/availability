@@ -1,4 +1,4 @@
-require(["jquery","fullcalendar"], function($) {
+require(["jquery","fullcalendar","fullcalendar/dist/fullcalendar.css", "../css/availability.css"], function($) {
 	$(document).ready(function() {
 		
 		$('#calendar').fullCalendar({

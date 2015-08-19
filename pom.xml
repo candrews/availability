@@ -150,7 +150,7 @@
 					        <goal>webpack</goal>
 					    </goals>
 		                <configuration>
-		                    <srcdir>${basedir}/src/main/resources/static</srcdir> <!-- srcdir (optional, for M2Eclipse integration) - a directory to check for changed files before executing in an incremental build  -->
+		                    <srcdir>${basedir}/src/main/frontend</srcdir> <!-- srcdir (optional, for M2Eclipse integration) - a directory to check for changed files before executing in an incremental build  -->
 		                    <triggerfiles> <!-- (optional, for M2Eclipse integration) - a list of files to check for changes before executing in an incremental build  -->
 		                           	<triggerfile>webpack.config.json</triggerfile>
 		                    </triggerfiles>

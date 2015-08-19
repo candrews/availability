@@ -1,4 +1,6 @@
 ## Availability
+[![Build Status](https://travis-ci.org/candrews/availability.svg?branch=master)](https://travis-ci.org/candrews/availability)
+
 Availability shows availability for a given person or room. It indicates current availability, availability at a specific date/time, and shows a calendar view.
 
 ## Building from Source

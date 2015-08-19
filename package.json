@@ -16,12 +16,13 @@
     "indexhtml-webpack-plugin": "~0.1.6",
     "jquery": "~2.1.4",
     "jshint-loader": "~0.8.3",
+    "jshint": "~2.8.0",
     "json-loader": "~0.5.2",
     "less": "~2.5.1",
     "less-loader": "~2.2.0",
     "raw-loader": "~0.5.1",
     "style-loader": "~0.12.3",
     "url-loader": "~0.5.6",
-    "webpack": "~1.11.0",
+    "webpack": "~1.11.0"
   }
 }

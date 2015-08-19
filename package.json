@@ -13,7 +13,7 @@
     "glob": "~5.0.14",
     "html-loader": "~0.3.0",
     "img-loader": "^1.2.0",
-    "indexhtml-webpack-plugin": "~0.1.7",
+    "indexhtml-webpack-plugin": "~0.1.8",
     "jquery": "~2.1.4",
     "jshint-loader": "~0.8.3",
     "jshint": "~2.8.0",

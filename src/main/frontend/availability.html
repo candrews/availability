@@ -5,10 +5,11 @@
   layout:decorator="layout/main">
   <head>
     <title th:text="${emailAddress}"></title>
-    <link href="./css/availability.css" />
+    <link href="css/availability.css" />
     <script src="js/availability.js"></script>
   </head>
   <body>
+	<img src="images/free.png" />
     <header layout:fragment="header">
       <h1 th:text="${emailAddress}"></h1>
     </header>

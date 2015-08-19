@@ -34,7 +34,7 @@ module.exports = {
 		path: destDir,
 		publicPath: "/",
 		filename: "js/[name]-[chunkhash].js",
-		chunkFilename: "/js/[id]-[chunkhash].js",
+		chunkFilename: "js/[id]-[chunkhash].js",
 		sourceMapFilename: "[file].map"
 	},
 	recordsOutputPath: path.join(destDir, "records.json"),

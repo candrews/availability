@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.integralblue.availability.NotFoundException;
 import com.integralblue.availability.model.Availability;
-import com.integralblue.availability.service.AggregateAvailabilityService;
+import com.integralblue.availability.service.AvailabilityService;
 
 import lombok.NonNull;
 
@@ -34,7 +34,7 @@ public class AvailabilityController {
 	private static final String DEFAULT_TENTATIVE_URL = "/images/tentative.png";
 	
 	@Autowired
-	private AggregateAvailabilityService aggregateAvailabilityService;
+	private AvailabilityService availabilityService;
 	
 	@RequestMapping(value="/user/{emailAddress}/availability",method=RequestMethod.GET,produces=MediaType.TEXT_HTML_VALUE)
 	public String getAvailabilityView(Model model, @PathVariable String emailAddress){
@@ -46,12 +46,12 @@ public class AvailabilityController {
 	@RequestMapping(value="/user/{emailAddress}/availability",method=RequestMethod.GET,produces=MediaType.APPLICATION_JSON_VALUE)
 	public Availability getAvailability(Model model, @PathVariable String emailAddress, @RequestParam(value="start") @DateTimeFormat(iso=ISO.DATE_TIME) Date start, @RequestParam(value="end") @DateTimeFormat(iso=ISO.DATE_TIME) Date end){
 		Assert.isTrue(!start.after(end), "start cannot be after end");
-		return aggregateAvailabilityService.getAvailability(emailAddress, start, end).orElseThrow(NotFoundException::new);
+		return availabilityService.getAvailability(emailAddress, start, end).orElseThrow(NotFoundException::new);
 	}
 	
 	@RequestMapping(value="/user/{emailAddress}/availability/redirect",method=RequestMethod.GET)
 	public ResponseEntity<Void> getAvailability(@NonNull HttpServletResponse response, @PathVariable String emailAddress, @RequestParam(required=false,value="free",defaultValue=DEFAULT_FREE_URL) String freeUrl, @RequestParam(value="busy",defaultValue=DEFAULT_BUSY_URL) String busyUrl, @RequestParam(value="tentative",defaultValue=DEFAULT_TENTATIVE_URL) String tentativeUrl, @RequestParam(value="date",required=false) Optional<Date> date){
-		final Optional<Availability> optionalAvailability = aggregateAvailabilityService.getAvailability(emailAddress, date.orElse(new Date()), date.orElse(new Date()));
+		final Optional<Availability> optionalAvailability = availabilityService.getAvailability(emailAddress, date.orElse(new Date()), date.orElse(new Date()));
 		if(optionalAvailability.isPresent()){
 			String url;
 			switch(optionalAvailability.get().getStatusAtStart()){

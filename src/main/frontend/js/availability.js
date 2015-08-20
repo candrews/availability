@@ -1,7 +1,8 @@
-require(["jquery","fullcalendar"], function($) {
+require(["jquery","fullcalendar", "fullcalendar-scheduler"], function($) {
 	$(document).ready(function() {
 		
 		$('#calendar').fullCalendar({
+			schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
 			header: {
 				left: 'prev,next today',
 				center: 'title',

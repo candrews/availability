@@ -1,4 +1,5 @@
 @import url(~fullcalendar/dist/fullcalendar.css)
+@import url(~fullcalendar-scheduler/dist/scheduler.css)
 #calendar {
 	max-width: 900px;
 	margin: 0 auto;

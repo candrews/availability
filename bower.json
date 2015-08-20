@@ -2,7 +2,8 @@
   "name": "availability",
   "version": "0.0.1",
   "dependencies": {
-    "fullcalendar": "~2.4.0"
+    "fullcalendar": "~2.4.0",
+    "fullcalendar-scheduler": "~1.0.0"
   },
   "private": true
 }

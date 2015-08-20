@@ -13,11 +13,11 @@ var entries = {
 var plugins = [
 	new webpack.optimize.OccurenceOrderPlugin(),
 	new webpack.optimize.DedupePlugin(),
-//	new webpack.optimize.UglifyJsPlugin({
-//	    compress: {
-//	        warnings: false
-//	    }
-//	}),
+	new webpack.optimize.UglifyJsPlugin({
+	    compress: {
+	        warnings: false
+	    }
+	}),
 	new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 20 }),
 	cssExtractPlugin
 ];

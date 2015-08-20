@@ -103,6 +103,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 						.status(legacyFreeBusyStatusToFreeBusyStatus(calendarEvent.getFreeBusyStatus()))
 						.location(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getLocation())
 						.subject(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getSubject())
+						.id(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getStoreId())
 					.build());
 			}
 		}

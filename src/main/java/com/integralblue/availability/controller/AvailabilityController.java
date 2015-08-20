@@ -1,11 +1,13 @@
 package com.integralblue.availability.controller;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
@@ -36,16 +38,18 @@ public class AvailabilityController {
 	@Autowired
 	private AvailabilityService availabilityService;
 	
-	@RequestMapping(value="/user/{emailAddress}/availability",method=RequestMethod.GET,produces=MediaType.TEXT_HTML_VALUE)
-	public String getAvailabilityView(Model model, @PathVariable String emailAddress){
-		model.addAttribute("emailAddress", emailAddress);
+	@RequestMapping(value="/user/{emailAddresses}/availability",method=RequestMethod.GET,produces=MediaType.TEXT_HTML_VALUE)
+	public String getAvailabilityView(Model model, @PathVariable("emailAddresses") String[] emailAddresses){
+		model.addAttribute("emailAddresses", Arrays.asList(emailAddresses));
 		return "availability";
 	}
 	
 	@ResponseBody
 	@RequestMapping(value="/user/{emailAddress}/availability",method=RequestMethod.GET,produces=MediaType.APPLICATION_JSON_VALUE)
-	public Availability getAvailability(Model model, @PathVariable String emailAddress, @RequestParam(value="start") @DateTimeFormat(iso=ISO.DATE_TIME) Date start, @RequestParam(value="end") @DateTimeFormat(iso=ISO.DATE_TIME) Date end){
+	public Availability getAvailability(@PathVariable String emailAddress, @RequestParam(value="start") @DateTimeFormat(iso=ISO.DATE_TIME) Date start, @RequestParam(value="end") @DateTimeFormat(iso=ISO.DATE_TIME) Date end, @RequestParam Integer timezoneOffset){
 		Assert.isTrue(!start.after(end), "start cannot be after end");
+		start = DateUtils.addMinutes(start, timezoneOffset);
+		end = DateUtils.addMinutes(end, timezoneOffset);
 		return availabilityService.getAvailability(emailAddress, start, end).orElseThrow(NotFoundException::new);
 	}
 	

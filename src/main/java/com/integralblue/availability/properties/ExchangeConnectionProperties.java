@@ -1,6 +1,8 @@
 package com.integralblue.availability.properties;
 
 import java.net.URI;
+import java.util.Map;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -45,4 +47,9 @@ public class ExchangeConnectionProperties {
 
 	@NotNull
 	URI uri;
+	
+	/**
+	 * Maps a room list name to a resources that compose that room. This method is provided in case the Exchange server doesn't have room lists configured.
+	 */
+	Map<String, Set<String>> roomLists;
 }

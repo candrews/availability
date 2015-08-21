@@ -1,41 +1,29 @@
 package com.integralblue.availability.model.slack;
 
 import java.util.Map;
+import java.util.Optional;
 
-import org.springframework.ui.Model;
+import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class SlackMessageModelFactory {
-	public static <T extends SlackMessage> T get(Model controllerModel, Class<T> asClass) {
-		if (asClass == null)
-			throw new IllegalArgumentException("asClass can't be null.");
-		
-		Map<String, Object> values = controllerModel.asMap(); 
-		if (asClass == SlashSlackMessage.class) {
-			SlashSlackMessage msg = SlashSlackMessage.builder()
-					.token(values.getOrDefault("token", "").toString())
-					.teamId(values.getOrDefault("team_id", "").toString())
-					.teamDomain(values.getOrDefault("team_domain", "").toString())
-					.channelId(values.getOrDefault("channel_id", "").toString())
-					.channelName(values.getOrDefault("channel_name", "").toString())
-					.userName(values.getOrDefault("user_name", "").toString())
-					.command(values.getOrDefault("command", "").toString())
-					.build();
-			msg.setText(values.getOrDefault("text", "").toString());
-			msg.setUserId(values.getOrDefault("user_id", "").toString());
-			return msg;
+	public static Optional<SlashSlackMessage> getSlackMessage(@NonNull Map<String, String> requestParams) {
+		try {
+			SlashSlackMessage msg = new SlashSlackMessage(
+					requestParams.get("user_id"),
+					requestParams.get("text"),
+					requestParams.get("token"),
+					requestParams.get("user_name"),
+					requestParams.get("command"),
+					requestParams.get("team_id"),
+					requestParams.get("team_domain"),
+					requestParams.get("channel_id"),
+					requestParams.get("channel_name"));
+			return Optional.of(msg);
+		} catch (NullPointerException e) {
+			log.error("When making a SlackMessage; a required field was null: " + e.getMessage());
+			return Optional.empty();
 		}
-		
-		/*
-		 * token=gIkuvaNzQIHg97ATvDxqgjtO
-team_id=T0001
-team_domain=example
-channel_id=C2147483705
-channel_name=test
-user_id=U2147483697
-user_name=Steve
-command=/weather
-text=94070
-		 */
-		throw new IllegalArgumentException(asClass.getCanonicalName() + " is not handled by this factory.");
 	}
 }

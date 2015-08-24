@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "bower": "~1.4.1",
+    "bower": "~1.5.1",
     "bower-webpack-plugin":"~0.1.8",
     "assets-webpack-plugin": "~2.2.0",
     "bundle-loader": "~0.5.4",

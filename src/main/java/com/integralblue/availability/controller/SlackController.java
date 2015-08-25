@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.integralblue.availability.model.slack.SlackMessageModelFactory;
 import com.integralblue.availability.model.slack.SlashSlackMessage;
-import com.ullink.slack.simpleslackapi.SlackSession;
-import com.ullink.slack.simpleslackapi.impl.SlackSessionFactory;
 
 @Controller
 @Slf4j

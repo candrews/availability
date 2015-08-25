@@ -11,6 +11,7 @@ import lombok.Value;
 @Value
 @Builder
 public class CalendarEvent {
+	String id;
 	String subject;
 	String location;
 	Date start;

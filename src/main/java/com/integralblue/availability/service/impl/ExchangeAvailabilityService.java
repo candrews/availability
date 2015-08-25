@@ -2,12 +2,14 @@ package com.integralblue.availability.service.impl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -103,6 +105,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 						.status(legacyFreeBusyStatusToFreeBusyStatus(calendarEvent.getFreeBusyStatus()))
 						.location(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getLocation())
 						.subject(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getSubject())
+						.id(calendarEvent.getDetails()==null?null:calendarEvent.getDetails().getStoreId())
 					.build());
 			}
 		}
@@ -141,12 +144,30 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	@SneakyThrows
 	@Override
 	public Optional<Set<Room>> getRooms(@NonNull String roomListEmailAddress) {
-		final Set<Room> roomLists = new HashSet<>();
-		final ExchangeService exchangeService = getExchangeService();
-		for(EmailAddress emailAddress : exchangeService.getRooms(new EmailAddress(roomListEmailAddress))){
-			roomLists.add(Room.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
+		if(exchangeConnectionProperties.getRoomLists().containsKey(roomListEmailAddress)){
+			return Optional.of(
+					Collections.unmodifiableSet(
+							exchangeConnectionProperties.getRoomLists().get(roomListEmailAddress).stream().map(emailAddress ->
+								Room.builder().emailAddress(emailAddress).name(emailAddress).build())
+							.collect(Collectors.toSet())));
+		}else{
+			final Set<Room> roomLists = new HashSet<>();
+			final ExchangeService exchangeService = getExchangeService();
+			Collection<EmailAddress> rooms;
+			try{
+				rooms=exchangeService.getRooms(new EmailAddress(roomListEmailAddress));
+			} catch (ServiceResponseException e) {
+				if (e.getErrorCode() == ServiceError.ErrorNameResolutionNoResults) {
+					return Optional.empty();
+				} else {
+					throw e;
+				}
+			}
+			for(EmailAddress emailAddress : rooms){
+				roomLists.add(Room.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
+			}
+			return Optional.of(Collections.unmodifiableSet(roomLists));
 		}
-		return Optional.of(Collections.unmodifiableSet(roomLists));
 	}
 	
 	private static FreeBusyStatus legacyFreeBusyStatusToFreeBusyStatus(@NonNull LegacyFreeBusyStatus legacyFreeBusyStatus){

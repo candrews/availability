@@ -123,7 +123,7 @@
        	    <plugin>
 		        <groupId>com.github.eirslett</groupId>
 		        <artifactId>frontend-maven-plugin</artifactId>
-		        <version>0.0.24</version>
+		        <version>0.0.25</version>
 		        <executions>
 		        	<execution>
 					    <id>install node and npm</id>
@@ -145,6 +145,17 @@
 					    </configuration>
 					</execution>
 					<execution>
+					    <id>bower build</id>
+					    <goals>
+					        <goal>bower</goal>
+					    </goals>
+		                <configuration>
+		                    <triggerfiles> <!-- (optional, for M2Eclipse integration) - a list of files to check for changes before executing in an incremental build  -->
+		                           	<triggerfile>bower.json</triggerfile>
+		                    </triggerfiles>
+		                </configuration>
+					</execution>
+					<execution>
 					    <id>webpack build</id>
 					    <goals>
 					        <goal>webpack</goal>
@@ -160,44 +171,6 @@
 				</executions>
 	    	</plugin>
 		</plugins>
-		<pluginManagement>
-			<plugins>
-				<!-- Remove this when using >= 0.0.25 of frontend-maven-plugin -->
-				<!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
-				<plugin>
-					<groupId>org.eclipse.m2e</groupId>
-					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
-					<configuration>
-						<lifecycleMappingMetadata>
-							<pluginExecutions>
-								<pluginExecution>
-									<pluginExecutionFilter>
-										<groupId>
-											com.github.eirslett
-										</groupId>
-										<artifactId>
-											frontend-maven-plugin
-										</artifactId>
-										<versionRange>
-											[0.0.24,)
-										</versionRange>
-										<goals>
-											<goal>webpack</goal>
-										</goals>
-									</pluginExecutionFilter>
-									<action>
-										<execute>
-											<runOnIncremental>true</runOnIncremental>
-										</execute>
-									</action>
-								</pluginExecution>
-							</pluginExecutions>
-						</lifecycleMappingMetadata>
-					</configuration>
-				</plugin>
-			</plugins>
-		</pluginManagement>
 	</build>
 	
 	<repositories>

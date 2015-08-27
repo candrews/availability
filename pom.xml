@@ -145,17 +145,6 @@
 					    </configuration>
 					</execution>
 					<execution>
-					    <id>bower build</id>
-					    <goals>
-					        <goal>bower</goal>
-					    </goals>
-		                <configuration>
-		                    <triggerfiles> <!-- (optional, for M2Eclipse integration) - a list of files to check for changes before executing in an incremental build  -->
-		                           	<triggerfile>bower.json</triggerfile>
-		                    </triggerfiles>
-		                </configuration>
-					</execution>
-					<execution>
 					    <id>webpack build</id>
 					    <goals>
 					        <goal>webpack</goal>

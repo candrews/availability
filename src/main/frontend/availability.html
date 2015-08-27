@@ -5,15 +5,12 @@
   layout:decorator="layout/main">
   <head>
     <title th:text="${#strings.listJoin(emailAddresses, ', ')}"></title>
+    <link rel="stylesheet" type="text/css" href="css/availability.css" />
     <script src="js/availability.js"></script>
   </head>
   <body th:attr="data-email-addresses=${#strings.listJoin(emailAddresses, ' ')}">
 	<img src="images/free.png" />
     <header layout:fragment="header">
-      <h1>Availability</h1>
-      <ul class="resource-list" th:if="${emailAddresses}">
-          <li th:each="it : ${emailAddresses}" th:text="${it}" />
-      </ul>
     </header>
     <section layout:fragment="content">
       <p>This is a paragraph from content page 1</p>

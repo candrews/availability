@@ -3,8 +3,6 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "bower": "~1.5.1",
-    "bower-webpack-plugin":"~0.1.8",
     "assets-webpack-plugin": "~2.2.0",
     "bundle-loader": "~0.5.4",
     "css-loader": "~0.16.0",
@@ -16,6 +14,8 @@
     "img-loader": "^1.2.0",
     "indexhtml-webpack-plugin": "~0.1.9",
     "jquery": "~2.1.4",
+    "fullcalendar" : "~2.4.0",
+    "fullcalendar-scheduler" : "~1.0.0",
     "jshint-loader": "~0.8.3",
     "jshint": "~2.8.0",
     "json-loader": "~0.5.2",

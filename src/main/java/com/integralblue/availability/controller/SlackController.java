@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -18,6 +19,8 @@ import com.integralblue.availability.model.slack.SlashSlackMessage;
 @Controller
 @Slf4j
 public class SlackController {
+	private static final String token = "S2KjclFypcEsHpeJU0rbWCY6";
+	
 	@RequestMapping(value="/slack/availability",method=RequestMethod.GET,produces=MediaType.TEXT_PLAIN_VALUE)
 	public ResponseEntity<String> getAvailability(@RequestParam Map<String,String> allRequestParams) {
 		log.debug("Incoming Slack request: " + allRequestParams.toString());
@@ -27,8 +30,8 @@ public class SlackController {
 			//		exceptions should be allowed to be thrown in this controller; thymeleaf will probably have to be disabled
 			//		at some point for this controller/url pattern
 			return ResponseEntity.badRequest().body("");
-		
-//		SlackSession session = SlackSessionFactory.createWebSocketSlackSession(authToken);
+		else if (!msg.get().getToken().equals(token))
+			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("");
 		return ResponseEntity.ok("Hello world! " + msg.get());
 	}
 }

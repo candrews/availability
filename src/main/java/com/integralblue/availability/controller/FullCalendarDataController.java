@@ -6,6 +6,7 @@ import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.MediaType;
@@ -48,6 +49,7 @@ public class FullCalendarDataController {
 	}
 	
 	@Autowired
+	@Qualifier("exchangeAvailabilityService")
 	private AvailabilityService availabilityService;
 
 	@ResponseBody

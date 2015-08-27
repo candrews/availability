@@ -3,6 +3,7 @@ package com.integralblue.availability.controller;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,6 +18,7 @@ import com.integralblue.availability.service.AvailabilityService;
 public class ListController {
 	
 	@Autowired
+	@Qualifier("exchangeAvailabilityService")
 	private AvailabilityService availabilityService;
 	
 	@RequestMapping(value="/list/{listName}/availability",method=RequestMethod.GET,produces=MediaType.TEXT_HTML_VALUE)

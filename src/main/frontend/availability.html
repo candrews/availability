@@ -5,7 +5,7 @@
   layout:decorator="layout/main">
   <head>
     <title th:text="${#strings.listJoin(emailAddresses, ', ')}"></title>
-    <link href="css/availability.css" />
+    <link rel="stylesheet" type="text/css" href="css/availability.css" />
     <script src="js/availability.js"></script>
   </head>
   <body th:attr="data-email-addresses=${#strings.listJoin(emailAddresses, ' ')}">

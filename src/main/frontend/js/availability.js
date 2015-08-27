@@ -1,5 +1,16 @@
-require(["jquery","fullcalendar", "fullcalendar-scheduler"], function($) {
+require(["jquery", "fullcalendar", "fullcalendar-scheduler"], function($) {
+
+	// var Availability = {
+	// 	$resList: {},
+	// 	events: [],
+	// 	allEvents: function(evs){
+	// 		this.events = evs;
+	// 		console.log(this.events);
+	// 	}
+	// };
+
 	$(document).ready(function() {
+		var $resList = $('div.resource-list');
 		var emailAddresses = $('body').data('emailAddresses').split(' ');
 		var eventSources = [];
 		var resources = [];
@@ -16,8 +27,13 @@ require(["jquery","fullcalendar", "fullcalendar-scheduler"], function($) {
 				title: emailAddress
 			});
 		});
-		
-		$('#calendar').fullCalendar({
+
+		// Availability.$resList = $resList;
+		// expose all this publically
+		// must be another way
+		// window.Availability = Availability;
+
+		var config = {
 			schedulerLicenseKey: 'GPL-My-Project-Is-Open-Source',
 			defaultView: 'agendaDay',
 			header: {
@@ -29,9 +45,13 @@ require(["jquery","fullcalendar", "fullcalendar-scheduler"], function($) {
 			editable: false,
 			eventLimit: true,
 			eventSources: eventSources,
+			// eventAfterAllRender: function(view){
+			// 	Availability.allEvents(view.calendar.clientEvents());
+			// },
+			// eventClick: function(ev, jsEv, view){},
+			// eventRender: function (ev, el, view){},
 			resources: resources
-		});
-		
+		};
+		var thing = $('#calendar').fullCalendar(config);
 	});
 });
-

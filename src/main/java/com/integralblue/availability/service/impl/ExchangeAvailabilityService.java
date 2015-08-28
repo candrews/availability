@@ -55,7 +55,6 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@Override
 	@SneakyThrows
-	@Cacheable
 	public Optional<Availability> getAvailability(@NonNull String emailAddress, @NonNull Date start, @NonNull Date end) {
 		Assert.isTrue(! start.after(end), "start must not be after end");
 		log.info("Finding availability for " + emailAddress + " from " + start + " to " + end);

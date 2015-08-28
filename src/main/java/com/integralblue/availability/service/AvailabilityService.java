@@ -30,5 +30,5 @@ public interface AvailabilityService {
 	 */
 	Optional<Set<Room>> getRooms(String roomListEmailAddress);
 	
-	Map<Room, FreeBusyStatus> getRoomsStatus(String roomListEmailAddress, Date fromDate, Date toDate);
+	Map<Room, FreeBusyStatus> getCurrentRoomsStatus(String roomListEmailAddress);
 }

@@ -105,7 +105,7 @@ public class SlackController {
 		//this logic of passing just the office name will likely need to change
 		//once we have actual room lists. as of right now the list of rooms are
 		//hard-coded in a properties file by office, i.e. the boston office or nyc office
-		Map<Room, FreeBusyStatus> rooms = availabilityService.getRoomsStatus(office.toLowerCase(), new Date(), new Date());
+		Map<Room, FreeBusyStatus> rooms = availabilityService.getCurrentRoomsStatus(office.toLowerCase());
 		messages.add("*" + office + "*\n");
 		rooms.forEach((room,status) -> {
 			messages.add("> " + room.getName() + ": " + status.toString() + "\n");

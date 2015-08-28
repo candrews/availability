@@ -39,7 +39,7 @@ public class SlackAvailabilityService implements AvailabilityService {
 	}
 
 	@Override
-	public Map<Room, FreeBusyStatus> getRoomsStatus(String roomListEmailAddress, Date fromDate, Date toDate) {
-		return exchangeAvailabilityService.getRoomsStatus(roomListEmailAddress, fromDate, toDate);
+	public Map<Room, FreeBusyStatus> getCurrentRoomsStatus(String roomListEmailAddress) {
+		return exchangeAvailabilityService.getCurrentRoomsStatus(roomListEmailAddress);
 	}
 }

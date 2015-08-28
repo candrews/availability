@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
 import microsoft.exchange.webservices.data.core.enumeration.misc.error.ServiceError;
@@ -32,6 +33,8 @@ import microsoft.exchange.webservices.data.property.complex.availability.TimeSug
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -44,14 +47,18 @@ import com.integralblue.availability.properties.ExchangeConnectionProperties;
 import com.integralblue.availability.service.AvailabilityService;
 
 @Service
+@CacheConfig(cacheNames= {"exchange"})
+@Slf4j
 public class ExchangeAvailabilityService implements AvailabilityService {
 	@Autowired
 	private ExchangeConnectionProperties exchangeConnectionProperties;
 
 	@Override
 	@SneakyThrows
+	@Cacheable
 	public Optional<Availability> getAvailability(@NonNull String emailAddress, @NonNull Date start, @NonNull Date end) {
 		Assert.isTrue(! start.after(end), "start must not be after end");
+		log.info("Finding availability for " + emailAddress + " from " + start + " to " + end);
 		final ExchangeService exchangeService = getExchangeService();
 		final List<AttendeeInfo> attendees = Arrays.asList(new AttendeeInfo[] { new AttendeeInfo(emailAddress) });
 
@@ -134,6 +141,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
+	@Cacheable
 	public Set<RoomList> getRoomLists() {
 		final Set<RoomList> roomLists = new HashSet<>();
 		final ExchangeService exchangeService = getExchangeService();
@@ -145,6 +153,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
+	@Cacheable
 	public Optional<Set<Room>> getRooms(@NonNull String roomListEmailAddress) {
 		if(exchangeConnectionProperties.getRoomLists().containsKey(roomListEmailAddress)){
 			return Optional.of(
@@ -186,11 +195,12 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	}
 
 	@Override
-	public Map<Room, FreeBusyStatus> getRoomsStatus(String roomListEmailAddress, Date fromDate, Date toDate) {
+	@Cacheable
+	public Map<Room, FreeBusyStatus> getCurrentRoomsStatus(String roomListEmailAddress) {
 		final Map<Room, FreeBusyStatus> roomStatusMap = new HashMap<>();
 		Optional<Set<Room>> rooms = this.getRooms(roomListEmailAddress);
 		rooms.get().forEach(room -> {
-			Optional<Availability> status = getAvailability(room.getEmailAddress(), fromDate, toDate);
+			Optional<Availability> status = getAvailability(room.getEmailAddress(), new Date(), new Date());
 			roomStatusMap.put(room, status.get().getStatusAtStart());
 		});
 		return roomStatusMap;

@@ -5,24 +5,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-
-import com.integralblue.availability.model.CalendarEvent;
-import com.integralblue.availability.model.Availability;
-import com.integralblue.availability.model.FreeBusyStatus;
-import com.integralblue.availability.model.Room;
-import com.integralblue.availability.model.RoomList;
-import com.integralblue.availability.properties.ExchangeConnectionProperties;
-import com.integralblue.availability.service.AvailabilityService;
 
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -40,6 +29,19 @@ import microsoft.exchange.webservices.data.misc.availability.TimeWindow;
 import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.availability.Suggestion;
 import microsoft.exchange.webservices.data.property.complex.availability.TimeSuggestion;
+
+import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import com.integralblue.availability.model.Availability;
+import com.integralblue.availability.model.CalendarEvent;
+import com.integralblue.availability.model.FreeBusyStatus;
+import com.integralblue.availability.model.Room;
+import com.integralblue.availability.model.RoomList;
+import com.integralblue.availability.properties.ExchangeConnectionProperties;
+import com.integralblue.availability.service.AvailabilityService;
 
 @Service
 public class ExchangeAvailabilityService implements AvailabilityService {
@@ -181,5 +183,16 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		default:
 			return FreeBusyStatus.FREE;
 		}
+	}
+
+	@Override
+	public Map<Room, FreeBusyStatus> getRoomsStatus(String roomListEmailAddress, Date fromDate, Date toDate) {
+		final Map<Room, FreeBusyStatus> roomStatusMap = new HashMap<>();
+		Optional<Set<Room>> rooms = this.getRooms(roomListEmailAddress);
+		rooms.get().forEach(room -> {
+			Optional<Availability> status = getAvailability(room.getEmailAddress(), fromDate, toDate);
+			roomStatusMap.put(room, status.get().getStatusAtStart());
+		});
+		return roomStatusMap;
 	}
 }

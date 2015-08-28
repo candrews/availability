@@ -1,10 +1,12 @@
 package com.integralblue.availability.service;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 import com.integralblue.availability.model.Availability;
+import com.integralblue.availability.model.FreeBusyStatus;
 import com.integralblue.availability.model.Room;
 import com.integralblue.availability.model.RoomList;
 
@@ -27,4 +29,6 @@ public interface AvailabilityService {
 	 * @return
 	 */
 	Optional<Set<Room>> getRooms(String roomListEmailAddress);
+	
+	Map<Room, FreeBusyStatus> getRoomsStatus(String roomListEmailAddress, Date fromDate, Date toDate);
 }

@@ -4,6 +4,9 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class IsobarSlashSlackParsingStrategy extends SlashSlackParsingStrategy {
 	@Override
 	public String getParsingIdentifier() {
@@ -13,7 +16,7 @@ public class IsobarSlashSlackParsingStrategy extends SlashSlackParsingStrategy {
 	@Override
 	public String getUserEmailAddresses(@NotNull ParsableSlackMessage message) {
 		assertOneParameter(message);
-		return message.getParameters().get().get(0) + "@isobar.com";
+		return message.getParameters().get().get(0).substring(1) + "@isobar.com";
 	}
 
 	@Override
@@ -32,14 +35,14 @@ public class IsobarSlashSlackParsingStrategy extends SlashSlackParsingStrategy {
 	@Override
 	public String getRoomLocation(@NotNull ParsableSlackMessage message) {
 		assertAtLeastOneParameter(message);
-		switch (message.getParameters().get().get(0).trim().toLowerCase()) {
+		switch (message.getParameters().get().get(1).trim().toLowerCase()) {
 			case "bos":
 			case "boston":
 				return "Boston";
 			case "nyc":
 			case "new york":
 			case "new york city":
-				return "New York";
+				return "NYC";
 			case "chicago":
 				return "Chicago";
 			case "gtm":
@@ -49,7 +52,7 @@ public class IsobarSlashSlackParsingStrategy extends SlashSlackParsingStrategy {
 				return "GTM";
 			case "lyn":
 			case "lymn":
-				return "Lynn";
+				return "Lynda";
 			default:
 				return "Other";
 		}

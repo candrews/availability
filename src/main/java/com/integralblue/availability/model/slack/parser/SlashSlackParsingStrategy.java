@@ -12,7 +12,7 @@ public abstract class SlashSlackParsingStrategy {
 	public abstract String getParsingIdentifier();
 	
 	protected void assertOneParameter(ParsableSlackMessage message) {
-		if (message.getParameters().isPresent())
+		if (!message.getParameters().isPresent())
 			throw new IllegalArgumentException("Expected at least one message parameter but there were none; " + message.toString());
 		List<String> params = message.getParameters().get();
 		if (params.size() != 1)
@@ -20,7 +20,7 @@ public abstract class SlashSlackParsingStrategy {
 	}
 	
 	protected void assertAtLeastOneParameter(ParsableSlackMessage message) {
-		if (message.getParameters().isPresent())
+		if (!message.getParameters().isPresent())
 			throw new IllegalArgumentException("Expected at least one message parameter but there were none; " + message.toString());
 		if (message.getParameters().get().isEmpty())
 			throw new IllegalArgumentException("Expected at least one message parameter, got none; " + message.toString());

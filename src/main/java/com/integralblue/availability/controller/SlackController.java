@@ -1,19 +1,17 @@
 package com.integralblue.availability.controller;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
@@ -26,10 +24,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.integralblue.availability.model.Availability;
 import com.integralblue.availability.model.FreeBusyStatus;
-import com.integralblue.availability.model.RoomList;
+import com.integralblue.availability.model.Room;
 import com.integralblue.availability.model.slack.SlackMessageModelFactory;
 import com.integralblue.availability.model.slack.SlashSlackMessage;
-import com.integralblue.availability.model.slack.parser.IsobarSlashSlackParsingStrategy;
 import com.integralblue.availability.model.slack.parser.ParsableSlackMessage;
 import com.integralblue.availability.model.slack.parser.SlackCommand;
 import com.integralblue.availability.model.slack.parser.SlashSlackParsingStrategy;
@@ -59,6 +56,11 @@ public class SlackController {
 	@RequestMapping(value="/slack/availability",method=RequestMethod.GET,produces=MediaType.TEXT_PLAIN_VALUE)
 	public ResponseEntity<String> getAvailability(@RequestParam Map<String,String> allRequestParams) {
 		log.debug("Incoming Slack request: " + allRequestParams.toString());
+		if (StringUtils.isEmpty(slackProperties.getParsingStrategyIdentifier()) || StringUtils.isEmpty(slackProperties.getSlashCommandToken())) {
+			log.error("Parsing strategy and token properties must not be empty if making Slack requests. Check .properties files.");
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("");
+		}
+			
 		Optional<SlashSlackMessage> msg = SlackMessageModelFactory.getSlackMessage(allRequestParams);
 		if (!msg.isPresent()) {
 			//TODO: thymeleaf automatically intercepts exceptions and tries to redirect to an error template page
@@ -81,82 +83,9 @@ public class SlackController {
 			SlackCommand behavior = parser.getIntention(message);
 			
 			if (behavior == SlackCommand.USER_STATUS) {
-				String email = parser.getUserEmailAddresses(message);
-				Optional<Availability> availability = availabilityService.getAvailability(email, new Date(), new Date());
-				Date nextAvailable = availability.get().getNextFree();
-				if (availability.get().getStatusAtStart() == FreeBusyStatus.BUSY)
-					returnText = email + " is busy, but will be available at " + nextAvailable + ".";
-				else
-					returnText = email + " is not busy.";
+				returnText = getTextForUserStatus(message, parser);
 			} else if (behavior == SlackCommand.ROOM_STATUS_BY_OFFICE) {
-				String office = parser.getRoomLocation(message);
-				
-				Set<RoomList> rooms = new HashSet<>();
-				String x = "bos.morphine@isobar.com,bos.boston@isobar.com,bos.mighty@isobar.com";
-				String[] x2 = x.split(",");
-				List<String> r = Arrays.asList(x2);
-				for (String r2 : r) {
-					RoomList rl = RoomList.builder().emailAddress(r2).name("Room Name: " + r2).build();
-					rooms.add(rl);
-				}
-				Map<RoomList, FreeBusyStatus> boston = new HashMap<>(),
-						chicago = new HashMap<>(), nyc = new HashMap<>()
-						, lynda = new HashMap<>(), gtm = new HashMap<>(),
-						other = new HashMap<>();
-				for (RoomList room : rooms) {
-					
-					Map<RoomList, FreeBusyStatus> addTo;
-					if (room.getEmailAddress().startsWith("bos."))
-						addTo = boston;
-					else if (room.getEmailAddress().startsWith("chi.cf."))
-						addTo = chicago;
-					else if (room.getEmailAddress().startsWith("nyc.cf."))
-						addTo = nyc;
-					else if (room.getEmailAddress().startsWith("lyn."))
-						addTo = lynda;
-					else if (room.getEmailAddress().startsWith("gtm."))
-						addTo = gtm;
-					else
-						addTo = other;
-					FreeBusyStatus status = availabilityService.getAvailability(room.getEmailAddress(), new Date(), new Date()).get().getStatusAtStart();
-					addTo.put(room,  status);
-				}
-				
-				messages.add("*Boston*\n");
-				boston.forEach((room,status) -> {
-					String roomName = room.getName().replaceAll("bos.", "").replaceAll("@roundarchisobar.com", "").replaceAll("@isobar.com", "");
-					messages.add("> " + roomName + ": " + status.toString() + "\n");
-				});
-				messages.add("*Chicago*\n");
-				chicago.forEach((room,status) -> {
-					String roomName = room.getName().replaceAll("chi.cf.", "").replaceAll("@roundarchisobar.com", "").replaceAll("@isobar.com", "");
-					messages.add("> " + roomName + ": " + status.toString() + "\n");
-				});
-				messages.add("*NYC*\n");
-				nyc.forEach((room,status) -> {
-					String roomName = room.getName().replaceAll("nyc.cf.", "").replaceAll("@roundarchisobar.com", "").replaceAll("@isobar.com", "");
-					messages.add("> " + roomName + ": " + status.toString() + "\n");
-				});
-				messages.add("*Lynda*\n");
-				lynda.forEach((room,status) -> {
-					String roomName = room.getName().replaceAll("lyn.", "").replaceAll("@roundarchisobar.com", "").replaceAll("@isobar.com", "");
-					roomName += "Room ";
-					messages.add("> " + roomName + ": " + status.toString() + "\n");
-				});
-				messages.add("*GTM*\n");
-				gtm.forEach((room,status) -> {
-					String roomName = room.getName().replaceAll("gtm.", "").replaceAll("@roundarchisobar.com", "").replaceAll("@isobar.com", "");
-					roomName += "GTM ";
-					messages.add("> " + roomName + ": " + status.toString() + "\n");
-				});
-				messages.add("*Other*\n");
-				gtm.forEach((room,status) -> {
-					String roomName = room.getName().replaceAll("@roundarchisobar.com", "").replaceAll("@isobar.com", "");
-					messages.add("> " + roomName + ": " + status.toString() + "\n");
-				});
-				for (String s : messages) {
-					returnText += s;
-				}
+				returnText = getTextForRoomStatusByOffice(message, parser, messages);
 			} else if (behavior == SlackCommand.UNKNOWN){
 				returnText = "I don't understand _" + message.getParameters().get() + "_. Right now just mention the user, like @user.name";
 			} else {
@@ -167,5 +96,37 @@ public class SlackController {
 			log.error("Error while trying to process " + msg.get().getCommand() + " " + msg.get().getText(), e);
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("");
 		}
+	}
+
+	private String getTextForRoomStatusByOffice(ParsableSlackMessage message,
+			SlashSlackParsingStrategy parser, final List<String> messages) {
+		String returnText = "";
+		String office = parser.getRoomLocation(message);
+		//this logic of passing just the office name will likely need to change
+		//once we have actual room lists. as of right now the list of rooms are
+		//hard-coded in a properties file by office, i.e. the boston office or nyc office
+		Map<Room, FreeBusyStatus> rooms = availabilityService.getRoomsStatus(office.toLowerCase(), new Date(), new Date());
+		messages.add("*" + office + "*\n");
+		rooms.forEach((room,status) -> {
+			messages.add("> " + room.getName() + ": " + status.toString() + "\n");
+		});
+		
+		for (String s : messages) {
+			returnText += s;
+		}
+		return returnText;
+	}
+
+	private String getTextForUserStatus(ParsableSlackMessage message,
+			SlashSlackParsingStrategy parser) {
+		String returnText;
+		String email = parser.getUserEmailAddresses(message);
+		Optional<Availability> availability = availabilityService.getAvailability(email, new Date(), new Date());
+		Date nextAvailable = availability.get().getNextFree();
+		if (availability.get().getStatusAtStart() == FreeBusyStatus.BUSY)
+			returnText = email + " is busy, but will be available at " + nextAvailable + ".";
+		else
+			returnText = email + " is not busy.";
+		return returnText;
 	}
 }

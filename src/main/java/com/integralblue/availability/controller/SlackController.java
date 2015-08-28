@@ -79,13 +79,12 @@ public class SlackController {
 				throw new IllegalArgumentException("A SlashSlackParsingStrategy of type " + slackProperties.getParsingStrategyIdentifier() + " does not exist.");
 			
 			String returnText = "";
-			final List<String> messages = new ArrayList<>();
 			SlackCommand behavior = parser.getIntention(message);
 			
 			if (behavior == SlackCommand.USER_STATUS) {
 				returnText = getTextForUserStatus(message, parser);
 			} else if (behavior == SlackCommand.ROOM_STATUS_BY_OFFICE) {
-				returnText = getTextForRoomStatusByOffice(message, parser, messages);
+				returnText = getTextForRoomStatusByOffice(message, parser);
 			} else if (behavior == SlackCommand.UNKNOWN){
 				returnText = "I don't understand _" + message.getParameters().get() + "_. Right now just mention the user, like @user.name";
 			} else {
@@ -98,8 +97,8 @@ public class SlackController {
 		}
 	}
 
-	private String getTextForRoomStatusByOffice(ParsableSlackMessage message,
-			SlashSlackParsingStrategy parser, final List<String> messages) {
+	private String getTextForRoomStatusByOffice(ParsableSlackMessage message, SlashSlackParsingStrategy parser) {
+		List<String> messages = new ArrayList<>();
 		String returnText = "";
 		String office = parser.getRoomLocation(message);
 		//this logic of passing just the office name will likely need to change

@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
+
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,43 +29,68 @@ import com.integralblue.availability.model.FreeBusyStatus;
 import com.integralblue.availability.model.RoomList;
 import com.integralblue.availability.model.slack.SlackMessageModelFactory;
 import com.integralblue.availability.model.slack.SlashSlackMessage;
+import com.integralblue.availability.model.slack.parser.IsobarSlashSlackParsingStrategy;
+import com.integralblue.availability.model.slack.parser.ParsableSlackMessage;
+import com.integralblue.availability.model.slack.parser.SlackCommand;
+import com.integralblue.availability.model.slack.parser.SlashSlackParsingStrategy;
+import com.integralblue.availability.properties.SlackProperties;
 import com.integralblue.availability.service.AvailabilityService;
 
 @Controller
 @Slf4j
 public class SlackController {
-	private static final String TOKEN = "S2KjclFypcEsHpeJU0rbWCY6";
+	@Autowired
+	protected SlackProperties slackProperties;
 	
 	@Autowired
 	@Qualifier("slackAvailabilityService")
 	private AvailabilityService availabilityService;
 	
+	@Autowired
+	List<SlashSlackParsingStrategy> slackParsingStrategies;
+	private final Map<String, SlashSlackParsingStrategy> parsingStrategies = new HashMap<String, SlashSlackParsingStrategy>();
+
+	@PostConstruct
+	private void afterPropertiesSet() {
+		for (SlashSlackParsingStrategy s : slackParsingStrategies)
+			parsingStrategies.put(s.getParsingIdentifier(), s);
+	}
+	
 	@RequestMapping(value="/slack/availability",method=RequestMethod.GET,produces=MediaType.TEXT_PLAIN_VALUE)
 	public ResponseEntity<String> getAvailability(@RequestParam Map<String,String> allRequestParams) {
 		log.debug("Incoming Slack request: " + allRequestParams.toString());
 		Optional<SlashSlackMessage> msg = SlackMessageModelFactory.getSlackMessage(allRequestParams);
-		if (!msg.isPresent())
+		if (!msg.isPresent()) {
 			//TODO: thymeleaf automatically intercepts exceptions and tries to redirect to an error template page
 			//		exceptions should be allowed to be thrown in this controller; thymeleaf will probably have to be disabled
 			//		at some point for this controller/url pattern
 			return ResponseEntity.badRequest().body("");
-		else if (!msg.get().getToken().equals(TOKEN))
+		} else if (!msg.get().getToken().equals(slackProperties.getSlashCommandToken())) {
+			log.debug("Token in request " + msg.get().getToken() + " did not match configured token.");
 			return ResponseEntity.status(HttpStatus.FORBIDDEN).body("");
+		}
 		
 		try {
-			SlashSlackMessage smsg = msg.get();
-			String parameter = smsg.getText();
+			ParsableSlackMessage message = msg.get();
+			SlashSlackParsingStrategy parser = this.parsingStrategies.get(slackProperties.getParsingStrategyIdentifier());
+			if (parser == null)
+				throw new IllegalArgumentException("A SlashSlackParsingStrategy of type " + slackProperties.getParsingStrategyIdentifier() + " does not exist.");
+			
 			String returnText = "";
 			final List<String> messages = new ArrayList<>();
-			if (parameter.startsWith("@")) {
-				parameter = parameter.substring(1) + "@isobar.com";
-				Optional<Availability> availability = availabilityService.getAvailability(parameter, new Date(), new Date());
+			SlackCommand behavior = parser.getIntention(message);
+			
+			if (behavior == SlackCommand.USER_STATUS) {
+				String email = parser.getUserEmailAddresses(message);
+				Optional<Availability> availability = availabilityService.getAvailability(email, new Date(), new Date());
 				Date nextAvailable = availability.get().getNextFree();
 				if (availability.get().getStatusAtStart() == FreeBusyStatus.BUSY)
-					returnText = parameter + " is busy, but will be available at " + nextAvailable + ".";
+					returnText = email + " is busy, but will be available at " + nextAvailable + ".";
 				else
-					returnText = parameter + " is not busy.";
-			} else if (parameter.startsWith("rooms")) {
+					returnText = email + " is not busy.";
+			} else if (behavior == SlackCommand.ROOM_STATUS_BY_OFFICE) {
+				String office = parser.getRoomLocation(message);
+				
 				Set<RoomList> rooms = new HashSet<>();
 				String x = "bos.morphine@isobar.com,bos.boston@isobar.com,bos.mighty@isobar.com";
 				String[] x2 = x.split(",");
@@ -130,8 +157,10 @@ public class SlackController {
 				for (String s : messages) {
 					returnText += s;
 				}
+			} else if (behavior == SlackCommand.UNKNOWN){
+				returnText = "I don't understand _" + message.getParameters().get() + "_. Right now just mention the user, like @user.name";
 			} else {
-				returnText = "I don't understand _" + parameter + "_. Right now just mention the user, like @alex.beardsley";
+				throw new IllegalArgumentException("All SlackCommands must be handled.");
 			}
 			return ResponseEntity.ok(returnText);
 		} catch (Exception e) {

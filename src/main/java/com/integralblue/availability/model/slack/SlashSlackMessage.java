@@ -4,14 +4,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import com.integralblue.availability.model.slack.parser.ParsableSlackMessage;
-
-import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NonNull;
 
+import com.integralblue.availability.model.slack.parser.ParsableSlackMessage;
+
 @Data
-@AllArgsConstructor
+@Builder
 public class SlashSlackMessage implements ParsableSlackMessage {
 	@NonNull String userId;
 	@NonNull String token;

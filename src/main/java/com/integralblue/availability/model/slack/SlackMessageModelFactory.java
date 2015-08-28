@@ -10,16 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 public class SlackMessageModelFactory {
 	public static Optional<SlashSlackMessage> getSlackMessage(@NonNull Map<String, String> requestParams) {
 		try {
-			SlashSlackMessage msg = new SlashSlackMessage(
-					requestParams.get("user_id"),
-					requestParams.get("text"),
-					requestParams.get("token"),
-					requestParams.get("user_name"),
-					requestParams.get("command"),
-					requestParams.get("team_id"),
-					requestParams.get("team_domain"),
-					requestParams.get("channel_id"),
-					requestParams.get("channel_name"));
+			SlashSlackMessage msg = SlashSlackMessage.builder()
+					.userId(requestParams.get("user_id"))
+					.text(requestParams.get("text"))
+					.token(requestParams.get("token"))
+					.userName(requestParams.get("user_name"))
+					.command(requestParams.get("command"))
+					.teamId(requestParams.get("team_id"))
+					.teamDomain(requestParams.get("team_domain"))
+					.channelId(requestParams.get("channel_id"))
+					.channelName(requestParams.get("channel_name"))
+					.build();
 			return Optional.of(msg);
 		} catch (NullPointerException e) {
 			log.error("When making a SlackMessage; a required field was null: " + e.getMessage());

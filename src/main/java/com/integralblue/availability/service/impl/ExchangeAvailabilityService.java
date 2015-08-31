@@ -144,8 +144,14 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	public Set<RoomList> getRoomLists() {
 		final Set<RoomList> roomLists = new HashSet<>();
 		final ExchangeService exchangeService = getExchangeService();
+		final Set<String> addressesFromExchange = new HashSet<>();
 		for(EmailAddress emailAddress : exchangeService.getRoomLists()){
 			roomLists.add(RoomList.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
+			addressesFromExchange.add(emailAddress.getAddress());
+		}
+		for(String emailAddress : exchangeConnectionProperties.getRoomLists().keySet()){
+			if(!addressesFromExchange.contains(emailAddress))
+				roomLists.add(RoomList.builder().emailAddress(emailAddress).name(emailAddress).build());
 		}
 		return Collections.unmodifiableSet(roomLists);
 	}

@@ -1,6 +1,7 @@
 package com.integralblue.availability.service;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -18,6 +19,14 @@ public interface AvailabilityService {
 	 * @return empty optional if the given emailAddress was not found
 	 */
 	Optional<Availability> getAvailability(String emailAddress, Date startDate, Date endDate);
+	
+	/** Get the availability for each provided email address
+	 * @param emailAddresses
+	 * @param startDate
+	 * @param endDate
+	 * @return map of email address to availability. The map's keys will be the same as the provided email addresses
+	 */
+	Map<String, Optional<Availability>> getAvailability(List<String> emailAddresses, Date startDate, Date endDate);
 	
 	/** Get the room lists
 	 * @return

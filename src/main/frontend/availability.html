@@ -11,9 +11,13 @@
   <body th:attr="data-email-addresses=${#strings.listJoin(emailAddresses, ' ')}">
 	<img src="images/free.png" />
     <header layout:fragment="header">
+        <h1>Availability</h1>
+        <ul class="resource-list u-clearfix" th:if="${emailAddresses}">
+            <li th:each="it : ${emailAddresses}" th:text="${it}" th:attr="data-val=${it}" />
+        </ul>
     </header>
     <section layout:fragment="content">
-      <p>This is a paragraph from content page 1</p>
+      <!-- <p>This is a paragraph from content page 1</p> -->
       <div id='calendar'></div>
     </section>
     <footer>

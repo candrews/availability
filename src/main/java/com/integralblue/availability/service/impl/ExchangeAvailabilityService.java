@@ -5,27 +5,17 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-
-import com.integralblue.availability.model.CalendarEvent;
-import com.integralblue.availability.model.Availability;
-import com.integralblue.availability.model.FreeBusyStatus;
-import com.integralblue.availability.model.Room;
-import com.integralblue.availability.model.RoomList;
-import com.integralblue.availability.properties.ExchangeConnectionProperties;
-import com.integralblue.availability.service.AvailabilityService;
-
 import lombok.NonNull;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
 import microsoft.exchange.webservices.data.core.enumeration.misc.error.ServiceError;
@@ -41,7 +31,24 @@ import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.availability.Suggestion;
 import microsoft.exchange.webservices.data.property.complex.availability.TimeSuggestion;
 
+import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import com.integralblue.availability.model.Availability;
+import com.integralblue.availability.model.CalendarEvent;
+import com.integralblue.availability.model.FreeBusyStatus;
+import com.integralblue.availability.model.Room;
+import com.integralblue.availability.model.RoomList;
+import com.integralblue.availability.properties.ExchangeConnectionProperties;
+import com.integralblue.availability.service.AvailabilityService;
+
 @Service
+@CacheConfig(cacheNames= {"exchange"})
+@Slf4j
 public class ExchangeAvailabilityService implements AvailabilityService {
 	@Autowired
 	private ExchangeConnectionProperties exchangeConnectionProperties;
@@ -50,6 +57,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	@SneakyThrows
 	public Optional<Availability> getAvailability(@NonNull String emailAddress, @NonNull Date start, @NonNull Date end) {
 		Assert.isTrue(! start.after(end), "start must not be after end");
+		log.info("Finding availability for " + emailAddress + " from " + start + " to " + end);
 		final ExchangeService exchangeService = getExchangeService();
 		final List<AttendeeInfo> attendees = Arrays.asList(new AttendeeInfo[] { new AttendeeInfo(emailAddress) });
 
@@ -132,6 +140,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
+	@Cacheable
 	public Set<RoomList> getRoomLists() {
 		final Set<RoomList> roomLists = new HashSet<>();
 		final ExchangeService exchangeService = getExchangeService();
@@ -143,6 +152,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
+	@Cacheable
 	public Optional<Set<Room>> getRooms(@NonNull String roomListEmailAddress) {
 		if(exchangeConnectionProperties.getRoomLists().containsKey(roomListEmailAddress)){
 			return Optional.of(
@@ -181,5 +191,17 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		default:
 			return FreeBusyStatus.FREE;
 		}
+	}
+
+	@Override
+	@Cacheable
+	public Map<Room, FreeBusyStatus> getCurrentRoomsStatus(String roomListEmailAddress) {
+		final Map<Room, FreeBusyStatus> roomStatusMap = new HashMap<>();
+		Optional<Set<Room>> rooms = this.getRooms(roomListEmailAddress);
+		rooms.get().forEach(room -> {
+			Optional<Availability> status = getAvailability(room.getEmailAddress(), new Date(), new Date());
+			roomStatusMap.put(room, status.get().getStatusAtStart());
+		});
+		return roomStatusMap;
 	}
 }

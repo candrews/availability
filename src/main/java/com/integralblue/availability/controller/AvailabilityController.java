@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,7 @@ public class AvailabilityController {
 	private static final String DEFAULT_TENTATIVE_URL = "/images/tentative.png";
 	
 	@Autowired
+	@Qualifier("exchangeAvailabilityService")
 	private AvailabilityService availabilityService;
 	
 	@RequestMapping(value="/user/{emailAddresses}/availability",method=RequestMethod.GET,produces=MediaType.TEXT_HTML_VALUE)

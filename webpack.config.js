@@ -21,7 +21,7 @@ var plugins = [
 	new webpack.optimize.LimitChunkCountPlugin({ maxChunks: 20 }),
 	cssExtractPlugin
 ];
-glob.sync('**/*.html', {cwd: srcDir}).forEach(function(item) { 
+glob.sync('**/*.html', {cwd: srcDir}).forEach(function(item) {
 	entries[item] = ["./" + item];
 	plugins.push(new IndexHtmlPlugin(item, item));
 });
@@ -61,4 +61,3 @@ module.exports = {
 };
 function escapeRegExpString(str) { return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&"); }
 function pathToRegExp(p) { return new RegExp("^" + escapeRegExpString(p)); }
-

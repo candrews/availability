@@ -1,3 +1,41 @@
-div {
-	color: red
+body {
+    font-family: sans-serif;
+    line-height: normal;
+}
+.u-clearfix:before,
+.u-clearfix:after {
+    display: table;
+    content: '';
+}
+.u-clearfix:after {
+    clear: both;
+}
+.resource-list {
+    max-width: 50%;
+}
+.resource-list li.m-dull {
+	opacity: .5;
+}
+.resource-list li {
+	opacity: 1;
+    position: relative;
+    float: left;
+	cursor: pointer;
+    /*max-width: 50%;*/
+    height: 20px;
+    margin: 0 0 6px 25px;
+    padding: 6px 6px 0 10px;
+    list-style: none;
+    border-bottom: 1px solid #fff;
+}
+.resource-list li:before {
+    position: absolute;
+    top: 2px;
+    display: block;
+    width: 0;
+    height: 0;
+    margin: 0 0 0 -30px;
+    content: '';
+    border-bottom: 25px solid #fff;
+    border-left: 25px solid transparent;
 }

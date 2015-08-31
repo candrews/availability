@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.annotation.PostConstruct;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -52,13 +54,14 @@ import com.integralblue.availability.service.AvailabilityService;
 public class ExchangeAvailabilityService implements AvailabilityService {
 	@Autowired
 	private ExchangeConnectionProperties exchangeConnectionProperties;
+	
+	private ExchangeService exchangeService;
 
 	@Override
 	@SneakyThrows
 	public Optional<Availability> getAvailability(@NonNull String emailAddress, @NonNull Date start, @NonNull Date end) {
 		Assert.isTrue(! start.after(end), "start must not be after end");
 		log.info("Finding availability for " + emailAddress + " from " + start + " to " + end);
-		final ExchangeService exchangeService = getExchangeService();
 		final List<AttendeeInfo> attendees = Arrays.asList(new AttendeeInfo[] { new AttendeeInfo(emailAddress) });
 
 		final AvailabilityOptions availabilityOptions = new AvailabilityOptions();
@@ -131,11 +134,12 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	}
 
 	@SneakyThrows
-	private ExchangeService getExchangeService() {
+	@PostConstruct
+	private void postConstruct() {
 		final ExchangeService exchangeService = new ExchangeService();
 		exchangeService.setCredentials(new WebCredentials(exchangeConnectionProperties.getCredentials().getUsername(), exchangeConnectionProperties.getCredentials().getPassword(),exchangeConnectionProperties.getCredentials().getDomain()));
 		exchangeService.setUrl(exchangeConnectionProperties.getUri());
-		return exchangeService;
+		this.exchangeService = exchangeService;
 	}
 
 	@SneakyThrows
@@ -143,7 +147,6 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	@Cacheable
 	public Set<RoomList> getRoomLists() {
 		final Set<RoomList> roomLists = new HashSet<>();
-		final ExchangeService exchangeService = getExchangeService();
 		final Set<String> addressesFromExchange = new HashSet<>();
 		for(EmailAddress emailAddress : exchangeService.getRoomLists()){
 			roomLists.add(RoomList.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
@@ -168,7 +171,6 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 							.collect(Collectors.toSet())));
 		}else{
 			final Set<Room> roomLists = new HashSet<>();
-			final ExchangeService exchangeService = getExchangeService();
 			Collection<EmailAddress> rooms;
 			try{
 				rooms=exchangeService.getRooms(new EmailAddress(roomListEmailAddress));

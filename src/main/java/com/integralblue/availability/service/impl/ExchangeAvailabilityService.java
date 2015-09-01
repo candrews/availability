@@ -81,7 +81,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		for(int attendeesAvailabilityIndex=0;attendeesAvailabilityIndex<results.getAttendeesAvailability().getCount();attendeesAvailabilityIndex++){
 			AttendeeAvailability attendeeAvailability;
 			try {
-				attendeeAvailability = results.getAttendeesAvailability().getResponseAtIndex(0);
+				attendeeAvailability = results.getAttendeesAvailability().getResponseAtIndex(attendeesAvailabilityIndex);
 				attendeeAvailability.throwIfNecessary();
 			} catch (ServiceResponseException e) {
 				if (e.getErrorCode() == ServiceError.ErrorMailRecipientNotFound) {

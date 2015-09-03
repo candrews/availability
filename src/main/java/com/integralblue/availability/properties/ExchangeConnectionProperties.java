@@ -6,6 +6,7 @@ import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.NestedConfigurationProperty;
@@ -50,6 +51,13 @@ public class ExchangeConnectionProperties {
 	
 	/**
 	 * Maps a room list name to a resources that compose that room. This method is provided in case the Exchange server doesn't have room lists configured.
+	 * Note that room list names are case insensitive.
 	 */
-	Map<String, Set<String>> roomLists;
+	Map<String, Set<String>> roomLists = new CaseInsensitiveMap<>();
+	
+	/**
+	 * Map of alias to room list.
+	 * Note that aliases are case insensitive.
+	 */
+	Map<String, String> roomListAlias = new CaseInsensitiveMap<>();
 }

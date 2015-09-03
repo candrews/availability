@@ -182,6 +182,9 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	@Override
 	@Cacheable
 	public Optional<Set<Room>> getRooms(@NonNull String roomListEmailAddress) {
+		if(exchangeConnectionProperties.getRoomListAlias().containsKey(roomListEmailAddress)){
+			return getRooms(exchangeConnectionProperties.getRoomListAlias().get(roomListEmailAddress));
+		}
 		if(exchangeConnectionProperties.getRoomLists().containsKey(roomListEmailAddress)){
 			return Optional.of(
 					Collections.unmodifiableSet(

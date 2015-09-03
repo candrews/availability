@@ -133,6 +133,12 @@
 					<!-- Don't add resources - webpack copies the files to target, and if this option is on, this plugin will delete those files -->
 <!-- 					<addResources>false</addResources> -->
 				</configuration>
+			    <dependencies>
+			        <dependency>
+			            <groupId>org.springframework</groupId>
+			            <artifactId>springloaded</artifactId>
+			        </dependency>
+			    </dependencies>
 			</plugin>
 	        <plugin>
 	            <groupId>pl.project13.maven</groupId>

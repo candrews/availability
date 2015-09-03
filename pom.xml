@@ -129,10 +129,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<!-- Don't add resources - webpack copies the files to target, and if this option is on, this plugin will delete those files -->
-<!-- 					<addResources>false</addResources> -->
-				</configuration>
 			    <dependencies>
 			        <dependency>
 			            <groupId>org.springframework</groupId>

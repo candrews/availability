@@ -1,7 +1,6 @@
 package com.integralblue.availability.service.impl;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -9,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -17,9 +15,23 @@ import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.time.DateUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import com.integralblue.availability.model.Availability;
+import com.integralblue.availability.model.CalendarEvent;
+import com.integralblue.availability.model.FreeBusyStatus;
+import com.integralblue.availability.model.Room;
+import com.integralblue.availability.model.RoomList;
+import com.integralblue.availability.properties.ExchangeConnectionProperties;
+import com.integralblue.availability.service.AvailabilityService;
+
 import lombok.NonNull;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import microsoft.exchange.webservices.data.core.ExchangeService;
 import microsoft.exchange.webservices.data.core.enumeration.availability.AvailabilityData;
 import microsoft.exchange.webservices.data.core.enumeration.misc.error.ServiceError;
@@ -35,26 +47,8 @@ import microsoft.exchange.webservices.data.property.complex.EmailAddress;
 import microsoft.exchange.webservices.data.property.complex.availability.Suggestion;
 import microsoft.exchange.webservices.data.property.complex.availability.TimeSuggestion;
 
-import org.apache.commons.lang3.time.DateUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-
-import com.google.common.collect.Lists;
-import com.integralblue.availability.NotFoundException;
-import com.integralblue.availability.model.Availability;
-import com.integralblue.availability.model.CalendarEvent;
-import com.integralblue.availability.model.FreeBusyStatus;
-import com.integralblue.availability.model.Room;
-import com.integralblue.availability.model.RoomList;
-import com.integralblue.availability.properties.ExchangeConnectionProperties;
-import com.integralblue.availability.service.AvailabilityService;
-
 @Service
 @CacheConfig(cacheNames= {"exchange"})
-@Slf4j
 public class ExchangeAvailabilityService implements AvailabilityService {
 	@Autowired
 	private ExchangeConnectionProperties exchangeConnectionProperties;
@@ -163,7 +157,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
-	@Cacheable
+	@Cacheable(cacheNames="roomLists")
 	public Set<RoomList> getRoomLists() {
 		final Set<RoomList> roomLists = new HashSet<>();
 		final Set<String> addressesFromExchange = new HashSet<>();
@@ -180,7 +174,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 
 	@SneakyThrows
 	@Override
-	@Cacheable
+	@Cacheable(cacheNames="rooms")
 	public Optional<Set<Room>> getRooms(@NonNull String roomListEmailAddress) {
 		if(exchangeConnectionProperties.getRoomListAlias().containsKey(roomListEmailAddress)){
 			return getRooms(exchangeConnectionProperties.getRoomListAlias().get(roomListEmailAddress));
@@ -222,13 +216,22 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 			return FreeBusyStatus.FREE;
 		}
 	}
-
+	
 	@Override
-	@Cacheable
-	public Map<Room, FreeBusyStatus> getCurrentRoomsStatus(String roomListEmailAddress) {
-		Optional<Set<Room>> rooms = this.getRooms(roomListEmailAddress);
-		Map<String, Room> emailAddressToRoom = getRooms(roomListEmailAddress).orElseThrow(NotFoundException::new).stream().collect(Collectors.toMap(Room::getEmailAddress, Function.identity()));
-		Map<String, Optional<Availability>> emailAddressToOptionalAvailability = getAvailability(rooms.orElseThrow(NotFoundException::new).stream().map(room -> room.getEmailAddress()).collect(Collectors.toList()), new Date(), new Date());
-		return emailAddressToOptionalAvailability.entrySet().stream().collect(Collectors.toMap(entry -> emailAddressToRoom.get(entry.getKey()), entry -> entry.getValue().map(Availability::getStatusAtStart).get()));
+	@Cacheable(cacheNames="roomListAvailability")
+	public Optional<Map<Room, Optional<Availability>>> getRoomListAvailability(String roomListEmailAddress) {
+		Optional<Set<Room>> optionalRooms = getRooms(roomListEmailAddress);
+		Optional<Map<String, Room>> emailAddressToRoom = optionalRooms
+				.map(rooms -> rooms.stream().collect(Collectors.toMap(Room::getEmailAddress, Function.identity())));
+		if (emailAddressToRoom.isPresent()) {
+			return optionalRooms
+					.map(rooms -> rooms.stream().map(Room::getEmailAddress).collect(Collectors.toList()))
+					.map(emailAddresses -> getAvailability(emailAddresses, new Date(), new Date()))
+					.map(m -> m.entrySet().stream()
+							.collect(Collectors.toMap(entry -> emailAddressToRoom.get().get(entry.getKey()),
+									entry -> entry.getValue())));
+		} else {
+			return Optional.empty();
+		}
 	}
 }

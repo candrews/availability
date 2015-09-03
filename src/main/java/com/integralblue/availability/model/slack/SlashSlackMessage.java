@@ -1,29 +1,49 @@
 package com.integralblue.availability.model.slack;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-
-import lombok.Builder;
-import lombok.Data;
-import lombok.NonNull;
+import javax.validation.constraints.NotNull;
 
 import com.integralblue.availability.model.slack.parser.ParsableSlackMessage;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
+
 @Data
-@Builder
+@NoArgsConstructor
 public class SlashSlackMessage implements ParsableSlackMessage {
-	@NonNull String userId;
-	@NonNull String token;
-	@NonNull String userName;
-	@NonNull String command;
+	@NotNull @NonNull String userId;
+	@NotNull @NonNull String token;
+	@NotNull @NonNull String userName;
+	@NotNull @NonNull String command;
 	String text;
 	String teamId;
 	String teamDomain;
 	String channelId;
 	String channelName;
-	@Override
-	public Optional<List<String>> getParameters() {
-		return Optional.ofNullable(Arrays.asList(getText().split("\\s")));
+	
+	public void setChannel_name(String channelName){
+		this.channelName=channelName;
 	}
+
+	public void setUser_id(@NotNull String userId) {
+		this.userId = userId;
+	}
+
+	public void setUser_name(@NotNull String userName) {
+		this.userName = userName;
+	}
+
+	public void setTeam_id(String teamId) {
+		this.teamId = teamId;
+	}
+
+	public void setTeam_domain(String teamDomain) {
+		this.teamDomain = teamDomain;
+	}
+
+	public void setChannel_id(String channelId) {
+		this.channelId = channelId;
+	}
+	
+	
 }

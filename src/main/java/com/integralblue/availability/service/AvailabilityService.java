@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.integralblue.availability.model.Availability;
-import com.integralblue.availability.model.FreeBusyStatus;
 import com.integralblue.availability.model.Room;
 import com.integralblue.availability.model.RoomList;
 
@@ -35,9 +34,9 @@ public interface AvailabilityService {
 	
 	/** Get the rooms in a room list
 	 * @param roomListEmailAddress
-	 * @return
+	 * @return empty optional if the given roomListEmailAddress was not found
 	 */
 	Optional<Set<Room>> getRooms(String roomListEmailAddress);
 	
-	Map<Room, FreeBusyStatus> getCurrentRoomsStatus(String roomListEmailAddress);
+	Optional<Map<Room, Optional<Availability>>> getRoomListAvailability(String roomListEmailAddress);
 }

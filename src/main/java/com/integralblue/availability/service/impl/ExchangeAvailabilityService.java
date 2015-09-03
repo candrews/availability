@@ -14,7 +14,9 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
@@ -153,6 +155,11 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		exchangeService.setCredentials(new WebCredentials(exchangeConnectionProperties.getCredentials().getUsername(), exchangeConnectionProperties.getCredentials().getPassword(),exchangeConnectionProperties.getCredentials().getDomain()));
 		exchangeService.setUrl(exchangeConnectionProperties.getUri());
 		this.exchangeService = exchangeService;
+	}
+	
+	@PreDestroy
+	public void destroy(){
+		IOUtils.closeQuietly(exchangeService);
 	}
 
 	@SneakyThrows

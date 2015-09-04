@@ -19,4 +19,5 @@ import org.springframework.stereotype.Component;
 @EqualsAndHashCode
 public class SlackProperties {
 	String slashCommandToken;
+	String apiToken;
 }

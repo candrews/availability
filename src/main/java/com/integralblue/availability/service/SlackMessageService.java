@@ -1,5 +1,7 @@
 package com.integralblue.availability.service;
 
+import java.util.Optional;
+
 import com.ullink.slack.simpleslackapi.SlackUser;
 
 /**
@@ -7,5 +9,5 @@ import com.ullink.slack.simpleslackapi.SlackUser;
  *
  */
 public interface SlackMessageService {
-	String respondToMessage(SlackUser messageSender, String message);
+	String respondToMessage(Optional<SlackUser> optionalMessageSender, String message);
 }

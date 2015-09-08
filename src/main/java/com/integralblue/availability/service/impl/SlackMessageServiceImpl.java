@@ -56,14 +56,11 @@ public class SlackMessageServiceImpl implements SlackMessageService {
 	private static final Pattern MAILTO_EMAIL_ADDRESS = Pattern.compile("<mailto:([^<>@\"'|]+@[^<>@\"'|]+)\\|.*?>");
 
 	@Override
-	public String respondToMessage(SlackUser messageSender, @NonNull String message) {
-		TimeZone timeZone;
-		if(messageSender == null){
-			timeZone = TimeZone.getDefault();
-		}else{
+	public String respondToMessage(Optional<SlackUser> optionalMessageSender, @NonNull String message) {
+		final TimeZone timeZone = optionalMessageSender.map(s -> {
 			// TODO get the timezone from messageSender - see https://github.com/Ullink/simple-slack-api/issues/27
-			timeZone = TimeZone.getTimeZone("America/Indiana/Indianapolis");
-		}
+			return TimeZone.getDefault();
+		}).orElse(TimeZone.getDefault());
 		try {
 			if("help".equalsIgnoreCase(message)){
 				return "Determine a user, room, or list of rooms availability:\n" + 

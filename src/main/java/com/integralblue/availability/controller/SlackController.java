@@ -1,5 +1,7 @@
 package com.integralblue.availability.controller;
 
+import java.util.Optional;
+
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +18,6 @@ import com.integralblue.availability.model.slack.SlashSlackMessage;
 import com.integralblue.availability.properties.SlackProperties;
 import com.integralblue.availability.service.SlackMessageService;
 import com.ullink.slack.simpleslackapi.SlackSession;
-import com.ullink.slack.simpleslackapi.SlackUser;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,15 +41,6 @@ public class SlackController {
 		if (!message.getToken().equals(slackProperties.getSlashCommandToken())) {
 			throw new AccessDeniedException("Token in request " + message.getToken() + " did not match configured token.");
 		}
-		SlackUser messageSender;
-		if(slackSession == null){
-			messageSender = null;
-		}else{
-			messageSender = slackSession.findUserById(message.getUserId());
-			if(messageSender == null){
-				throw new IllegalArgumentException("No slack user found with userid: " + message.getUserId());
-			}
-		}
-		return slackMessageService.respondToMessage(messageSender, message.getText());
+		return slackMessageService.respondToMessage(Optional.of(slackSession).map(slackSession -> slackSession.findUserById(message.getUserId())), message.getText());
 	}
 }

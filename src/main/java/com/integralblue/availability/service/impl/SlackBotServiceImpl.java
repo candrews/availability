@@ -1,5 +1,7 @@
 package com.integralblue.availability.service.impl;
 
+import java.util.Optional;
+
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,10 +34,10 @@ public class SlackBotServiceImpl {
 						message = message.substring(1);
 					}
 					message = message.trim();
-					session.sendMessage(event.getChannel(), slackMessageService.respondToMessage(event.getSender(), message), null);
+					session.sendMessage(event.getChannel(), slackMessageService.respondToMessage(Optional.of(event.getSender()), message), null);
 				}else if(event.getChannel().isDirect()){
 					// this is a direct message, so the bot should reply
-					session.sendMessage(event.getChannel(), slackMessageService.respondToMessage(event.getSender(), event.getMessageContent()), null);
+					session.sendMessage(event.getChannel(), slackMessageService.respondToMessage(Optional.of(event.getSender()), event.getMessageContent()), null);
 				}else if(StringUtils.containsIgnoreCase(event.getMessageContent(),"<@" + session.sessionPersona().getId() + ">")){
 					// this bot is mentioned, so it should say something
 					session.sendMessage(event.getChannel(), "How can I help you? You can send messages to @" + session.sessionPersona().getUserName() +  " or open a direct message chat. For help, say '@" + session.sessionPersona().getUserName() +  "' or send a direct message with the text 'help'", null);

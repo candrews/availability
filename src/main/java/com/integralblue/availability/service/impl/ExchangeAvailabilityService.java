@@ -14,9 +14,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
@@ -54,9 +52,6 @@ import microsoft.exchange.webservices.data.property.complex.availability.TimeSug
 public class ExchangeAvailabilityService implements AvailabilityService {
 	@Autowired
 	private ExchangeConnectionProperties exchangeConnectionProperties;
-	
-	private ExchangeService exchangeService;
-
 
 	@Override
 	@SneakyThrows
@@ -69,9 +64,12 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		final AvailabilityOptions availabilityOptions = new AvailabilityOptions();
 		availabilityOptions.setMeetingDuration(30);
 
-		// minimum time frame allowed by API is 24 hours
-		final GetUserAvailabilityResults results = exchangeService.getUserAvailability(emailAddresses.stream().map(AttendeeInfo::new).collect(Collectors.toList()),
+		GetUserAvailabilityResults results;
+		try(ExchangeService exchangeService = getExchangeService()){
+			// minimum time frame allowed by API is 24 hours
+			results = exchangeService.getUserAvailability(emailAddresses.stream().map(AttendeeInfo::new).collect(Collectors.toList()),
 				new TimeWindow(start, end.before(DateUtils.addDays(start, 1))?DateUtils.addDays(start, 1):end), AvailabilityData.FreeBusyAndSuggestions,availabilityOptions);
+		}
 
 		Assert.isTrue(results.getAttendeesAvailability().getCount() == emailAddresses.size());
 		for(int attendeesAvailabilityIndex=0;attendeesAvailabilityIndex<results.getAttendeesAvailability().getCount();attendeesAvailabilityIndex++){
@@ -148,18 +146,12 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		return ret.get(emailAddress);
 	}
 
-	@SneakyThrows
 	@PostConstruct
-	private void postConstruct() {
+	private ExchangeService getExchangeService() {
 		final ExchangeService exchangeService = new ExchangeService();
 		exchangeService.setCredentials(new WebCredentials(exchangeConnectionProperties.getCredentials().getUsername(), exchangeConnectionProperties.getCredentials().getPassword(),exchangeConnectionProperties.getCredentials().getDomain()));
 		exchangeService.setUrl(exchangeConnectionProperties.getUri());
-		this.exchangeService = exchangeService;
-	}
-	
-	@PreDestroy
-	public void destroy(){
-		IOUtils.closeQuietly(exchangeService);
+		return exchangeService;
 	}
 
 	@SneakyThrows
@@ -168,9 +160,11 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 	public Set<RoomList> getRoomLists() {
 		final Set<RoomList> roomLists = new HashSet<>();
 		final Set<String> addressesFromExchange = new HashSet<>();
-		for(EmailAddress emailAddress : exchangeService.getRoomLists()){
-			roomLists.add(RoomList.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
-			addressesFromExchange.add(emailAddress.getAddress());
+		try(ExchangeService exchangeService = getExchangeService()){
+			for(EmailAddress emailAddress : exchangeService.getRoomLists()){
+				roomLists.add(RoomList.builder().emailAddress(emailAddress.getAddress()).name(emailAddress.getName()).build());
+				addressesFromExchange.add(emailAddress.getAddress());
+			}
 		}
 		for(String emailAddress : exchangeConnectionProperties.getRoomLists().keySet()){
 			if(!addressesFromExchange.contains(emailAddress))
@@ -195,7 +189,7 @@ public class ExchangeAvailabilityService implements AvailabilityService {
 		}else{
 			final Set<Room> roomLists = new HashSet<>();
 			Collection<EmailAddress> rooms;
-			try{
+			try(ExchangeService exchangeService = getExchangeService()){
 				rooms=exchangeService.getRooms(new EmailAddress(roomListEmailAddress));
 			} catch (ServiceResponseException e) {
 				if (e.getErrorCode() == ServiceError.ErrorNameResolutionNoResults) {

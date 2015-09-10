@@ -58,8 +58,7 @@ public class SlackMessageServiceImpl implements SlackMessageService {
 	@Override
 	public String respondToMessage(Optional<SlackUser> optionalMessageSender, @NonNull String message) {
 		final TimeZone timeZone = optionalMessageSender.map(s -> {
-			// TODO get the timezone from messageSender - see https://github.com/Ullink/simple-slack-api/issues/27
-			return TimeZone.getDefault();
+			return TimeZone.getTimeZone(s.getTimeZone());
 		}).orElse(TimeZone.getDefault());
 		try {
 			if("help".equalsIgnoreCase(message)){

@@ -98,7 +98,7 @@
 		<dependency>
 		  <groupId>com.ullink.slack</groupId>
 		  <artifactId>simpleslackapi</artifactId>
-		  <version>0.4.5</version>
+		  <version>0.4.6</version>
 		</dependency>
 		<dependency>
           <groupId>com.github.ulisesbocchio</groupId>

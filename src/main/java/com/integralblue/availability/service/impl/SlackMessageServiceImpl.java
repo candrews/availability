@@ -16,9 +16,12 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.actuate.endpoint.InfoEndpoint;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.integralblue.availability.model.Availability;
 import com.integralblue.availability.model.FreeBusyStatus;
 import com.integralblue.availability.model.Room;
@@ -41,9 +44,15 @@ public class SlackMessageServiceImpl implements SlackMessageService {
 	@Autowired
 	@Qualifier("slackAvailabilityService")
 	private AvailabilityService availabilityService;
+
+	@Autowired
+	private InfoEndpoint infoEndpoint;
 	
 	@Autowired(required=false)
 	private SlackSession slackSession;
+	
+	@Autowired
+	private ObjectMapper objectMapper;
 	
 	private static final Pattern ROOM_LIST_PATTERN = Pattern.compile("rooms (.+?)\\s*", Pattern.CASE_INSENSITIVE);
 	
@@ -69,6 +78,9 @@ public class SlackMessageServiceImpl implements SlackMessageService {
 						"for example:\n" +
 						"`rooms boston` will tell you the availability of all rooms in the boston list\n" +
 						"`@bob.jones bill.gates@microsoft.com` will tell you the availability of Bob and Bill";
+			}
+			if("info".equalsIgnoreCase(message)){
+				return " ```" + objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(infoEndpoint.invoke()) + " ```";
 			}
 			StringBuilder ret = new StringBuilder();
 			ret.append("All times are in your timezone (" + timeZone.getDisplayName() + ")\n");
